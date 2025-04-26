@@ -4,12 +4,14 @@ authors = ["Masanori Kanamaru <kanamaru-masanori@hotmail.co.jp>"]
 version = "0.0.1-DEV"
 
 [deps]
+AsteroidThermoPhysicalModels = "ab46f4a3-3c83-4d86-98d6-41a8b1a2e76e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+AsteroidThermoPhysicalModels = "0.0.7"
 LinearAlgebra = "1.11.0"
 Rotations = "1.7.1"
 SPICE = "0.2.3"
