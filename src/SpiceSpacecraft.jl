@@ -11,7 +11,7 @@ struct SpiceSpacecraftStatic
 end
 
 """
-    struct SpiceSpacecraftState
+    mutable struct SpiceSpacecraftState
 
 A structure holding dynamic spacecraft state.
 
@@ -20,14 +20,14 @@ A structure holding dynamic spacecraft state.
 - `velocity`    : Spacecraft velocity
 - `instruments` : Onboard instruments (cameras, etc.)
 """
-struct SpiceSpacecraftState
+mutable struct SpiceSpacecraftState
     position::SVector{3, Float64}
     velocity::SVector{3, Float64}
     instruments::Dict{String, SpiceCamera}
 end
 
 """
-    mutable struct SpiceSpacecraft
+    struct SpiceSpacecraft
 
 A spacecraft model based on SPICE kernels.
 
@@ -35,7 +35,7 @@ A spacecraft model based on SPICE kernels.
 - `static` : Static spacecraft information
 - `state`  : Dynamic spacecraft state
 """
-mutable struct SpiceSpacecraft
+struct SpiceSpacecraft
     static::SpiceSpacecraftStatic
     state::SpiceSpacecraftState
 end

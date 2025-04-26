@@ -21,7 +21,7 @@ struct SpiceCameraStatic
 end
 
 """
-    struct SpiceCameraState
+    mutable struct SpiceCameraState
 
 A structure holding dynamic camera state.
 
@@ -31,7 +31,7 @@ A structure holding dynamic camera state.
 - `position`  : Camera position
 - `velocity`  : Camera velocity
 """
-struct SpiceCameraState
+mutable struct SpiceCameraState
     boresight::SVector{3, Float64}
     bounds::Vector{SVector{3, Float64}}
     position::SVector{3, Float64}
@@ -39,7 +39,7 @@ struct SpiceCameraState
 end
 
 """
-    mutable struct SpiceCamera
+    struct SpiceCamera
 
 A camera model based on SPICE kernels.
 
@@ -47,7 +47,7 @@ A camera model based on SPICE kernels.
 - `static` : Static camera information
 - `state`  : Dynamic camera state
 """
-mutable struct SpiceCamera
+struct SpiceCamera
     static::SpiceCameraStatic
     state::SpiceCameraState
 end

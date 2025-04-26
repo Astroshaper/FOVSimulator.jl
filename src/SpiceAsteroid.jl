@@ -13,7 +13,7 @@ struct SpiceAsteroidStatic
 end
 
 """
-    struct SpiceAsteroidState
+    mutable struct SpiceAsteroidState
 
 A structure holding dynamic asteroid state.
 
@@ -21,13 +21,13 @@ A structure holding dynamic asteroid state.
 - `position` : Asteroid position
 - `velocity` : Asteroid velocity
 """
-struct SpiceAsteroidState
+mutable struct SpiceAsteroidState
     position::SVector{3, Float64}
     velocity::SVector{3, Float64}
 end
 
 """
-    mutable struct SpiceAsteroid
+    struct SpiceAsteroid
 
 An asteroid model based on SPICE kernels.
 
@@ -35,7 +35,7 @@ An asteroid model based on SPICE kernels.
 - `static` : Static asteroid information
 - `state`  : Dynamic asteroid state
 """
-mutable struct SpiceAsteroid
+struct SpiceAsteroid
     static::SpiceAsteroidStatic
     state::SpiceAsteroidState
 end
