@@ -2,15 +2,15 @@
 """
     struct SpiceCameraStatic
 
-静的なカメラ情報を保持する構造体
+A structure holding static camera information.
 
 # Fields
-- `name`       : カメラ名
-- `id`         : カメラID
-- `fov_shape`  : FOV形状（"RECTANGLE", "CIRCLE", "ELLIPSE"など）
-- `fov_frame`  : FOVの参照フレーム
-- `boresight` : FOV参照フレームにおけるボアサイトベクトル
-- `bounds`    : FOV参照フレームにおける境界ベクトル
+- `name`       : Camera name
+- `id`         : Camera ID
+- `fov_shape`  : FOV shape ("RECTANGLE", "CIRCLE", "ELLIPSE", etc.)
+- `fov_frame`  : FOV reference frame
+- `boresight` : Boresight vector in the FOV reference frame
+- `bounds`    : FOV boundary vectors in the FOV reference frame
 """
 struct SpiceCameraStatic
     name::String
@@ -24,13 +24,13 @@ end
 """
     struct SpiceCameraState
 
-動的なカメラ状態を保持する構造体
+A structure holding dynamic camera state.
 
 # Fields
-- `boresight` : 現在のフレームにおけるボアサイトベクトル
-- `bounds`    : 現在のフレームにおける境界ベクトル
-- `position`  : カメラの位置
-- `velocity`  : カメラの速度
+- `boresight` : Boresight vector in the current frame
+- `bounds`    : FOV boundary vectors in the current frame
+- `position`  : Camera position
+- `velocity`  : Camera velocity
 """
 struct SpiceCameraState
     boresight::SVector{3, Float64}
@@ -42,11 +42,11 @@ end
 """
     mutable struct SpiceCamera
 
-SPICEカーネルに基づくカメラモデル
+A camera model based on SPICE kernels.
 
 # Fields
-- `static` : 静的なカメラ情報
-- `state`  : 動的なカメラ状態
+- `static` : Static camera information
+- `state`  : Dynamic camera state
 """
 mutable struct SpiceCamera
     static::SpiceCameraStatic
@@ -55,22 +55,22 @@ end
 
 
 function SpiceCamera(name::String, id::Int)
-    # SPICEカーネルから静的情報を取得
+    # Get static information from SPICE kernel
     fov_shape, fov_frame, boresight, bounds = SPICE.getfov(id)
     
-    # 静的情報の構造体を作成
+    # Create static information structure
     static = SpiceCameraStatic(name, id, fov_shape, fov_frame, boresight, bounds)
     
-    # 動的情報の初期化
+    # Initialize dynamic information
     boresight_state = similar(boresight)
     bounds_state = similar(bounds)
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
     
-    # 動的情報の構造体を作成
+    # Create dynamic information structure
     state = SpiceCameraState(boresight_state, bounds_state, position, velocity)
     
-    # カメラオブジェクトを作成
+    # Create camera object
     cam = SpiceCamera(static, state)
     
     return cam
@@ -107,28 +107,28 @@ end
 """
     update!(cam::SpiceCamera, et::Float64, ref::String, abcorr::String, obs::String)
 
-指定された時刻とフレームでカメラの状態を更新する
+Update camera state at the specified time and frame.
 
 # Arguments
-- `cam`    : カメラ
-- `et`     : 暦時間
-- `ref`    : 目標フレーム
-- `abcorr` : 収差補正フラグ
-- `obs`    : 観測者名
+- `cam`    : Camera
+- `et`     : Ephemeris time
+- `ref`    : Target frame
+- `abcorr` : Aberration correction flag
+- `obs`    : Observing body name
 """
 function update!(cam::SpiceCamera, et::Float64, ref::String, abcorr::String, obs::String)
-    # 回転行列を計算
+    # Calculate rotation matrix
     Rot = RotMatrix{3}(SPICE.pxform(cam.static.fov_frame, ref, et))
 
-    # ボアサイトベクトルを更新
+    # Update boresight vector
     cam.state.boresight = Rot * cam.static.boresight
 
-    # 境界ベクトルを更新
+    # Update boundary vectors
     for (i, v) in enumerate(cam.static.bounds)
         cam.state.bounds[i] = Rot * v
     end
 
-    # 位置と速度を更新
+    # Update position and velocity
     state, _ = SPICE.spkezr(cam.static.name, et, ref, abcorr, obs)
     cam.state.position = state[1:3] * 1000
     cam.state.velocity = state[4:6] * 1000

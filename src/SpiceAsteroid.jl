@@ -1,11 +1,11 @@
 """
     struct SpiceAsteroidStatic
 
-静的な小惑星情報を保持する構造体
+A structure holding static asteroid information.
 
 # Fields
-- `name`  : 小惑星名
-- `shape` : 形状モデル
+- `name`  : Asteroid name
+- `shape` : Shape model
 """
 struct SpiceAsteroidStatic
     name::String
@@ -15,11 +15,11 @@ end
 """
     struct SpiceAsteroidState
 
-動的な小惑星状態を保持する構造体
+A structure holding dynamic asteroid state.
 
 # Fields
-- `position` : 小惑星の位置
-- `velocity` : 小惑星の速度
+- `position` : Asteroid position
+- `velocity` : Asteroid velocity
 """
 struct SpiceAsteroidState
     position::SVector{3, Float64}
@@ -29,11 +29,11 @@ end
 """
     mutable struct SpiceAsteroid
 
-SPICEカーネルに基づく小惑星モデル
+An asteroid model based on SPICE kernels.
 
 # Fields
-- `static` : 静的な小惑星情報
-- `state`  : 動的な小惑星状態
+- `static` : Static asteroid information
+- `state`  : Dynamic asteroid state
 """
 mutable struct SpiceAsteroid
     static::SpiceAsteroidStatic
@@ -44,24 +44,24 @@ end
 """
     SpiceAsteroid(name::String, shape::ShapeModel)
 
-小惑星モデルを構築する
+Construct an asteroid model.
 
 # Arguments
-- `name`  : 小惑星名
-- `shape` : 形状モデル
+- `name`  : Asteroid name
+- `shape` : Shape model
 """
 function SpiceAsteroid(name::String, shape::ShapeModel)
-    # 静的情報の構造体を作成
+    # Create static information structure
     static = SpiceAsteroidStatic(name, shape)
     
-    # 動的情報の初期化
+    # Initialize dynamic information
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
     
-    # 動的情報の構造体を作成
+    # Create dynamic information structure
     state = SpiceAsteroidState(position, velocity)
     
-    # 小惑星オブジェクトを作成
+    # Create asteroid object
     asteroid = SpiceAsteroid(static, state)
     
     return asteroid
@@ -84,14 +84,14 @@ end
 """
     update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::String, obs::String)
 
-指定された時刻とフレームで小惑星の状態を更新する
+Update asteroid state at the specified time and frame.
 
 # Arguments
-- `asteroid` : 小惑星
-- `et`       : 暦時間
-- `ref`      : 目標フレーム
-- `abcorr`   : 収差補正フラグ
-- `obs`      : 観測者名
+- `asteroid` : Asteroid
+- `et`       : Ephemeris time
+- `ref`      : Target frame
+- `abcorr`   : Aberration correction flag
+- `obs`      : Observing body name
 """
 function update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::String, obs::String)
     state, _ = SPICE.spkezr(asteroid.static.name, et, ref, abcorr, obs)
@@ -155,5 +155,5 @@ function project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Fl
     
     return (round(Int, u), round(Int, v))
 
-    # カメラの背面(p[3]<0)は写らない
+    # Points behind the camera (p[3]<0) are not visible
 end

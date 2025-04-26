@@ -1,10 +1,10 @@
 """
     struct SpiceSpacecraftStatic
 
-静的な宇宙機情報を保持する構造体
+A structure holding static spacecraft information.
 
 # Fields
-- `name` : 宇宙機名
+- `name` : Spacecraft name
 """
 struct SpiceSpacecraftStatic
     name::String
@@ -13,12 +13,12 @@ end
 """
     struct SpiceSpacecraftState
 
-動的な宇宙機状態を保持する構造体
+A structure holding dynamic spacecraft state.
 
 # Fields
-- `position`    : 宇宙機の位置
-- `velocity`    : 宇宙機の速度
-- `instruments` : 搭載機器（カメラなど）
+- `position`    : Spacecraft position
+- `velocity`    : Spacecraft velocity
+- `instruments` : Onboard instruments (cameras, etc.)
 """
 struct SpiceSpacecraftState
     position::SVector{3, Float64}
@@ -29,11 +29,11 @@ end
 """
     mutable struct SpiceSpacecraft
 
-SPICEカーネルに基づく宇宙機モデル
+A spacecraft model based on SPICE kernels.
 
 # Fields
-- `static` : 静的な宇宙機情報
-- `state`  : 動的な宇宙機状態
+- `static` : Static spacecraft information
+- `state`  : Dynamic spacecraft state
 """
 mutable struct SpiceSpacecraft
     static::SpiceSpacecraftStatic
@@ -44,24 +44,24 @@ end
 """
     SpiceSpacecraft(name::String)
 
-宇宙機モデルを構築する
+Construct a spacecraft model.
 
 # Arguments
-- `name` : 宇宙機名
+- `name` : Spacecraft name
 """
 function SpiceSpacecraft(name::String)
-    # 静的情報の構造体を作成
+    # Create static information structure
     static = SpiceSpacecraftStatic(name)
     
-    # 動的情報の初期化
+    # Initialize dynamic information
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
     instruments = Dict{String, SpiceCamera}()
     
-    # 動的情報の構造体を作成
+    # Create dynamic information structure
     state = SpiceSpacecraftState(position, velocity, instruments)
     
-    # 宇宙機オブジェクトを作成
+    # Create spacecraft object
     spacecraft = SpiceSpacecraft(static, state)
     
     return spacecraft
@@ -84,11 +84,11 @@ end
 """
     add_instrument!(spacecraft::SpiceSpacecraft, instrument::SpiceCamera)
 
-宇宙機に機器を追加する
+Add an instrument to the spacecraft.
 
 # Arguments
-- `spacecraft` : 宇宙機
-- `instrument` : 追加する機器（カメラなど）
+- `spacecraft` : Spacecraft
+- `instrument` : Instrument to add (camera, etc.)
 """
 function add_instrument!(spacecraft::SpiceSpacecraft, instrument::SpiceCamera)
     spacecraft.state.instruments[instrument.static.name] = instrument
@@ -99,14 +99,14 @@ end
 """
     update!(spacecraft::SpiceSpacecraft, et::Float64, ref::String, abcorr::String, obs::String)
 
-指定された時刻とフレームで宇宙機の状態を更新する
+Update spacecraft state at the specified time and frame.
 
 # Arguments
-- `spacecraft` : 宇宙機
-- `et`         : 暦時間
-- `ref`        : 目標フレーム
-- `abcorr`     : 収差補正フラグ
-- `obs`        : 観測者名
+- `spacecraft` : Spacecraft
+- `et`         : Ephemeris time
+- `ref`        : Target frame
+- `abcorr`     : Aberration correction flag
+- `obs`        : Observing body name
 
 c.f. https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkezr_c.html
 """
