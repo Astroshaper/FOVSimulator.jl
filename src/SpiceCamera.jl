@@ -61,13 +61,13 @@ function SpiceCamera(name::String, id::Int)
     static = SpiceCameraStatic(name, id, fov_shape, fov_frame, boresight, bounds)
     
     # Initialize dynamic information
-    boresight_state = similar(boresight)
-    bounds_state = similar(bounds)
+    state_boresight = similar(boresight)
+    state_bounds = similar(bounds)
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
     
     # Create dynamic information structure
-    state = SpiceCameraState(boresight_state, bounds_state, position, velocity)
+    state = SpiceCameraState(state_boresight, state_bounds, position, velocity)
     
     # Create camera object
     cam = SpiceCamera(static, state)
