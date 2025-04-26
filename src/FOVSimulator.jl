@@ -20,4 +20,6 @@ include("util.jl")
 export angle_rad, angle_deg
 export solar_phase_angle, solar_elongation_angle
 
+include("fov_projection.jl")
+
 end # module FOVSimulator
