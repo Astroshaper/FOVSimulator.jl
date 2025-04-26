@@ -134,7 +134,7 @@ Calculate a focal length of a camera.
 - `fov_angle` : Field of view angle [deg]
 - `n_pixel`   : Number of pixels
 """
-focal_length(fov_angle::Float64, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_angle) / 2))
+focal_length(fov_angle::Real, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_angle) / 2))
 
 
 """
