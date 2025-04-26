@@ -8,13 +8,13 @@ import SPICE
 using AsteroidThermoPhysicalModels
 
 include("SpiceCamera.jl")
-export SpiceCamera, update!
+export SpiceCameraStatic, SpiceCameraState, SpiceCamera, update!
 
 include("SpiceSpaceCraft.jl")
-export SpiceSpaceCraft, add_instrument!
+export SpiceSpacecraftStatic, SpiceSpacecraftState, SpiceSpacecraft, add_instrument!
 
 include("SpiceAsteroid.jl")
-export SpiceAsteroid, transform_shape
+export SpiceAsteroidStatic, SpiceAsteroidState, SpiceAsteroid, transform_shape
 
 ## Utility functions
 angle_rad(v1::AbstractVector{<:Real}, v2::AbstractVector{<:Real}) = acos(clamp(normalize(v1) ⋅ normalize(v2), -1.0, 1.0))

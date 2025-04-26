@@ -1,25 +1,69 @@
 """
-    mutable struct SpiceAsteroid
+    struct SpiceAsteroidStatic
+
+静的な小惑星情報を保持する構造体
 
 # Fields
-- `_name_`   : Asteroid name
-- `position` : Asteroid position
-- `velocity` : Asteroid velocity
-- `shape`    : Shape model
+- `name`  : 小惑星名
+- `shape` : 形状モデル
+"""
+struct SpiceAsteroidStatic
+    name::String
+    shape::ShapeModel
+end
+
+"""
+    struct SpiceAsteroidState
+
+動的な小惑星状態を保持する構造体
+
+# Fields
+- `position` : 小惑星の位置
+- `velocity` : 小惑星の速度
+"""
+struct SpiceAsteroidState
+    position::SVector{3, Float64}
+    velocity::SVector{3, Float64}
+end
+
+"""
+    mutable struct SpiceAsteroid
+
+SPICEカーネルに基づく小惑星モデル
+
+# Fields
+- `static` : 静的な小惑星情報
+- `state`  : 動的な小惑星状態
 """
 mutable struct SpiceAsteroid
-    _name_   ::String
-    position ::SVector{3, Float64}
-    velocity ::SVector{3, Float64}
-    shape    ::ShapeModel
+    static::SpiceAsteroidStatic
+    state::SpiceAsteroidState
 end
 
 
 """
-"""
-function SpiceAsteroid(_name_::String, shape::ShapeModel)
-    asteroid = SpiceAsteroid(_name_, zeros(3), zeros(3), shape)
+    SpiceAsteroid(name::String, shape::ShapeModel)
 
+小惑星モデルを構築する
+
+# Arguments
+- `name`  : 小惑星名
+- `shape` : 形状モデル
+"""
+function SpiceAsteroid(name::String, shape::ShapeModel)
+    # 静的情報の構造体を作成
+    static = SpiceAsteroidStatic(name, shape)
+    
+    # 動的情報の初期化
+    position = @SVector zeros(3)
+    velocity = @SVector zeros(3)
+    
+    # 動的情報の構造体を作成
+    state = SpiceAsteroidState(position, velocity)
+    
+    # 小惑星オブジェクトを作成
+    asteroid = SpiceAsteroid(static, state)
+    
     return asteroid
 end
 
@@ -27,33 +71,32 @@ end
 function Base.show(io::IO, asteroid::SpiceAsteroid)
     msg =  "Asteroid parameters\n"
     msg *= "-------------------\n"
-    msg *= "Asteroid name : $(asteroid._name_)\n"
-    msg *= "Position        : $(asteroid.position)\n"
-    msg *= "Velocity        : $(asteroid.velocity)\n"
+    msg *= "Asteroid name : $(asteroid.static.name)\n"
+    msg *= "Position      : $(asteroid.state.position)\n"
+    msg *= "Velocity      : $(asteroid.state.velocity)\n"
     msg *= "-------------------\n"
     
     print(io, msg)
-    println(asteroid.shape)
+    println(asteroid.static.shape)
 end
 
 
 """
     update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::String, obs::String)
 
-Update position and velocity vectors of asteroid at a reference frame `ref` and ephemeris time `et`.
+指定された時刻とフレームで小惑星の状態を更新する
 
 # Arguments
-- `asteroid` : Asteroid
-- `et`       : Ephemeris time
-- `ref`      : Target frame
-- `abcorr`   : Aberration correction flag.
-- `obs`      : Observing body name.
+- `asteroid` : 小惑星
+- `et`       : 暦時間
+- `ref`      : 目標フレーム
+- `abcorr`   : 収差補正フラグ
+- `obs`      : 観測者名
 """
 function update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::String, obs::String)
-
-    state, _ = SPICE.spkezr(asteroid._name_, et, ref, abcorr, obs)
-    asteroid.position = state[1:3] * 1000
-    asteroid.velocity = state[4:6] * 1000
+    state, _ = SPICE.spkezr(asteroid.static.name, et, ref, abcorr, obs)
+    asteroid.state.position = state[1:3] * 1000
+    asteroid.state.velocity = state[4:6] * 1000
 
     return
 end
@@ -65,16 +108,16 @@ end
 function transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String)
 
     Rot = RotMatrix{3}(SPICE.pxform(from, to, et))
-    obs_pos = SVector{3}(SPICE.spkpos(asteroid._name_, et, to, abcorr, obs)[1]) * 1000
+    obs_pos = SVector{3}(SPICE.spkpos(asteroid.static.name, et, to, abcorr, obs)[1]) * 1000
 
-    nodes = [Rot * node + obs_pos for node in asteroid.shape.nodes]
-    faces = asteroid.shape.faces
+    nodes = [Rot * node + obs_pos for node in asteroid.static.shape.nodes]
+    faces = asteroid.static.shape.faces
     
     face_centers = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
     face_normals = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
     face_areas   = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
 
-    visiblefacets = asteroid.shape.visiblefacets
+    visiblefacets = asteroid.static.shape.visiblefacets
 
     shape_new = ShapeModel(nodes, faces, face_centers, face_normals, face_areas, visiblefacets)
     

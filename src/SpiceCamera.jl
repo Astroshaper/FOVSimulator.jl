@@ -1,47 +1,78 @@
 
 """
-    mutable struct SpiceCamera
+    struct SpiceCameraStatic
+
+静的なカメラ情報を保持する構造体
 
 # Fields
-- `_name_`       : Instrument name
-- `_id_`         : Instrument ID
-- `_fov_shape_`  : Instrument FOV shape as defined in the SPICE kernel.
-- `_fov_frame_`  : Name of the frame in which FOV vectors are defined as defined in the SPICE kernel.
-- `_boresight_`  : Boresight vector as defined in the SPICE kernel.
-- `_fov_bounds_` : FOV boundary vectors as defined in the SPICE kernel.
-- `boresight`    : Boresight vector at a frame/epoch.
-- `fov_bounds`   : FOV boundary vectors at a frame/epoch.
-- `position`     : Instrument position
-- `velocity`     : Instrument velocity
+- `name`       : カメラ名
+- `id`         : カメラID
+- `fov_shape`  : FOV形状（"RECTANGLE", "CIRCLE", "ELLIPSE"など）
+- `fov_frame`  : FOVの参照フレーム
+- `boresight` : FOV参照フレームにおけるボアサイトベクトル
+- `bounds`    : FOV参照フレームにおける境界ベクトル
+"""
+struct SpiceCameraStatic
+    name::String
+    id::Int
+    fov_shape::String
+    fov_frame::String
+    boresight::SVector{3, Float64}
+    bounds::Vector{SVector{3, Float64}}
+end
+
+"""
+    struct SpiceCameraState
+
+動的なカメラ状態を保持する構造体
+
+# Fields
+- `boresight` : 現在のフレームにおけるボアサイトベクトル
+- `bounds`    : 現在のフレームにおける境界ベクトル
+- `position`  : カメラの位置
+- `velocity`  : カメラの速度
+"""
+struct SpiceCameraState
+    boresight::SVector{3, Float64}
+    bounds::Vector{SVector{3, Float64}}
+    position::SVector{3, Float64}
+    velocity::SVector{3, Float64}
+end
+
+"""
+    mutable struct SpiceCamera
+
+SPICEカーネルに基づくカメラモデル
+
+# Fields
+- `static` : 静的なカメラ情報
+- `state`  : 動的なカメラ状態
 """
 mutable struct SpiceCamera
-    _name_ ::String
-    _id_   ::Int
-
-    _fov_shape_  ::String
-    _fov_frame_  ::String
-    _boresight_  ::SVector{3, Float64}
-    _fov_bounds_ ::Vector{SVector{3, Float64}}
-
-    boresight  ::SVector{3, Float64}
-    fov_bounds ::Vector{SVector{3, Float64}}
-
-    position ::SVector{3, Float64}
-    velocity ::SVector{3, Float64}
+    static::SpiceCameraStatic
+    state::SpiceCameraState
 end
 
 
-function SpiceCamera(_name_::String, _id_::Int)
-    _fov_shape_, _fov_frame_, _boresight_, _fov_bounds_ = SPICE.getfov(_id_)
-
-    boresight = similar(_boresight_)
-    fov_bounds = similar(_fov_bounds_)
-
+function SpiceCamera(name::String, id::Int)
+    # SPICEカーネルから静的情報を取得
+    fov_shape, fov_frame, boresight, bounds = SPICE.getfov(id)
+    
+    # 静的情報の構造体を作成
+    static = SpiceCameraStatic(name, id, fov_shape, fov_frame, boresight, bounds)
+    
+    # 動的情報の初期化
+    boresight_state = similar(boresight)
+    bounds_state = similar(bounds)
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
-
-    cam = SpiceCamera(_name_, _id_, _fov_shape_, _fov_frame_, _boresight_, _fov_bounds_, boresight, fov_bounds, position, velocity)
-
+    
+    # 動的情報の構造体を作成
+    state = SpiceCameraState(boresight_state, bounds_state, position, velocity)
+    
+    # カメラオブジェクトを作成
+    cam = SpiceCamera(static, state)
+    
     return cam
 end
 
@@ -49,24 +80,24 @@ end
 function Base.show(io::IO, cam::SpiceCamera)
     msg =  "Camera parameters\n"
     msg *= "-----------------\n"
-    msg *= "Instrument name      : $(cam._name_)\n"
-    msg *= "Instrument ID        : $(cam._id_)\n"
-    msg *= "FOV shape            : $(cam._fov_shape_)\n"
-    msg *= "FOV reference frame  : $(cam._fov_frame_)\n"
-    msg *= "Boresight vector     : $(cam._boresight_)\n"
+    msg *= "Instrument name      : $(cam.static.name)\n"
+    msg *= "Instrument ID        : $(cam.static.id)\n"
+    msg *= "FOV shape            : $(cam.static.fov_shape)\n"
+    msg *= "FOV reference frame  : $(cam.static.fov_frame)\n"
+    msg *= "Boresight vector     : $(cam.static.boresight)\n"
     msg *= "FOV boundary vectors : \n"
-    for v in cam._fov_bounds_
+    for v in cam.static.bounds
         msg *= "    $v\n"
     end
     msg *= "-----------------\n"
-    msg *= "Current boresight vector     : $(cam.boresight)\n"
+    msg *= "Current boresight vector     : $(cam.state.boresight)\n"
     msg *= "Current FOV boundary vectors : \n"
-    for v in cam.fov_bounds
+    for v in cam.state.bounds
         msg *= "    $v\n"
     end
     msg *= "-----------------\n"
-    msg *= "Camera position : $(cam.position)\n"
-    msg *= "Camera velocity : $(cam.velocity)\n"
+    msg *= "Camera position : $(cam.state.position)\n"
+    msg *= "Camera velocity : $(cam.state.velocity)\n"
     msg *= "-----------------\n"
     
     print(io, msg)
@@ -74,30 +105,33 @@ end
 
 
 """
-    update!(cam::SpiceCamera, target_frame::String, et::Float64)
+    update!(cam::SpiceCamera, et::Float64, ref::String, abcorr::String, obs::String)
 
-Update a boresight vector and FOV boundary vectors at an ephemeris time `et` and reference frame `ref`.
+指定された時刻とフレームでカメラの状態を更新する
 
 # Arguments
-- `cam`    : Camera
-- `et`     : Ephemeris time
-- `ref`    : Target frame
-- `abcorr` : Aberration correction flag.
-- `obs`    : Observing body name.
+- `cam`    : カメラ
+- `et`     : 暦時間
+- `ref`    : 目標フレーム
+- `abcorr` : 収差補正フラグ
+- `obs`    : 観測者名
 """
 function update!(cam::SpiceCamera, et::Float64, ref::String, abcorr::String, obs::String)
+    # 回転行列を計算
+    Rot = RotMatrix{3}(SPICE.pxform(cam.static.fov_frame, ref, et))
 
-    Rot = RotMatrix{3}(SPICE.pxform(cam._fov_frame_, ref, et))
+    # ボアサイトベクトルを更新
+    cam.state.boresight = Rot * cam.static.boresight
 
-    cam.boresight = Rot * cam._boresight_
-
-    for (i, v) in enumerate(cam._fov_bounds_)
-        cam.fov_bounds[i] = Rot * v
+    # 境界ベクトルを更新
+    for (i, v) in enumerate(cam.static.bounds)
+        cam.state.bounds[i] = Rot * v
     end
 
-    state, _ = SPICE.spkezr(cam._name_, et, ref, abcorr, obs)
-    cam.position = state[1:3] * 1000
-    cam.velocity = state[4:6] * 1000
+    # 位置と速度を更新
+    state, _ = SPICE.spkezr(cam.static.name, et, ref, abcorr, obs)
+    cam.state.position = state[1:3] * 1000
+    cam.state.velocity = state[4:6] * 1000
 
     return
 end
