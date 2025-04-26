@@ -10,7 +10,7 @@ using AsteroidThermoPhysicalModels
 include("SpiceCamera.jl")
 export SpiceCameraStatic, SpiceCameraState, SpiceCamera, update!
 
-include("SpiceSpaceCraft.jl")
+include("SpiceSpacecraft.jl")
 export SpiceSpacecraftStatic, SpiceSpacecraftState, SpiceSpacecraft, add_instrument!
 
 include("SpiceAsteroid.jl")
