@@ -1,7 +1,10 @@
+using AsteroidThermoPhysicalModels
 using FOVSimulator
-using Test
+using Downloads
+using LinearAlgebra
+using SPICE
 using StaticArrays
-
+using Test
 
 @testset "Utility functions" begin
     @test angle_deg([1, 0, 0], [ 0, 1, 0]) ≈ 90
@@ -25,3 +28,6 @@ end
     img = (100, 100)
     @test FOVSimulator.project_point_fov(p, fov, img) == (100, 50)
 end
+
+
+include("HERA/HERA.jl")
