@@ -26,7 +26,7 @@ end
     p = SVector(1.0, 0.0, 1.0)
     fov = (90.0, 90.0)
     img = (100, 100)
-    @test FOVSimulator.project_point_fov(p, fov, img) == (100, 50)
+    @test FOVSimulator.project_point_to_fov(p, fov, img) == (100, 50)
 end
 
 

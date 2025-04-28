@@ -1,19 +1,32 @@
 """
+    transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String) -> shape_new
 
+Transform the shape of an asteroid to a new reference frame.
+
+# Arguments
+- `asteroid` : Asteroid
+- `from`     : Reference frame to transform from (asteroid-fixed frame)
+- `to`       : Reference frame to transform to
+- `et`       : Ephemeris time
+- `abcorr`   : Aberration correction
+- `obs`      : Observing body name
+
+# Returns
+- `shape_new` : Transformed shape model
 """
 function transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String)
 
     Rot = RotMatrix{3}(SPICE.pxform(from, to, et))
-    obs_pos = SVector{3}(SPICE.spkpos(asteroid.static.name, et, to, abcorr, obs)[1]) * 1000
+    target_pos = SVector{3}(SPICE.spkpos(asteroid.static.name, et, to, abcorr, obs)[1]) * 1000
 
-    nodes = [Rot * node + obs_pos for node in asteroid.static.shape.nodes]
-    faces = asteroid.static.shape.faces
+    shape = asteroid.static.shape
+    nodes = [Rot * node + target_pos for node in shape.nodes]
+    faces = shape.faces
     
-    face_centers = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
-    face_normals = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
-    face_areas   = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
-
-    visiblefacets = asteroid.static.shape.visiblefacets
+    face_centers  = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
+    face_normals  = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
+    face_areas    = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
+    visiblefacets = shape.visiblefacets
 
     shape_new = ShapeModel(nodes, faces, face_centers, face_normals, face_areas, visiblefacets)
     
@@ -34,9 +47,19 @@ focal_length(fov_angle::Real, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_ang
 
 
 """
+    project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> Tuple{Int, Int}
 
+Project a 3D point onto a 2D image plane using the field-of-view angles and image size.
+
+# Arguments
+- `p`          : 3D point in space (SVector{3, Float64})
+- `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
+- `img_size`   : Tuple of image size (width [pixels], height [pixels])
+
+# Returns
+- `(u, v)`     : 2D pixel coordinates of the projected point (rounded to nearest integer)
 """
-function project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
+function project_point_to_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
     fov_x, fov_y = fov_angles
     width, height = img_size
 
@@ -46,10 +69,59 @@ function project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Fl
     c_x = width  / 2  # x-coordinate of the principal point
     c_y = height / 2  # y-coordinate of the principal point
 
-    u = f_x * p[1] / p[3] + c_x
-    v = f_y * p[2] / p[3] + c_y
+    u = round(Int, f_x * p[1] / p[3] + c_x)
+    v = round(Int, f_y * p[2] / p[3] + c_y)
     
-    return (round(Int, u), round(Int, v))
+    return (u, v)
+end
 
-    # Points behind the camera (p[3]<0) are not visible
+
+"""
+    struct ProjectedFace
+
+Struct for storing projected face information to a camera frame.
+
+# Fields
+- `u`          : pixel u-coordinate (column)
+- `v`          : pixel v-coordinate (row)
+- `z`          : depth (distance from camera)
+- `face_index` : original face index
+"""
+struct ProjectedFace
+    u::Int
+    v::Int
+    z::Float64
+    face_index::Int
+end
+
+
+"""
+    project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> projections
+
+Project the face centers of a ShapeModel onto image coordinates.
+
+# Arguments
+- `shape`      : ShapeModel transformed into the camera frame
+- `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
+- `img_size`   : Tuple of image size (width [pixels], height [pixels])
+
+# Returns
+- `projections` : Vector of `ProjectedFace` objects
+"""
+function project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
+    width, height = img_size
+    projected_faces = ProjectedFace[]
+
+    for (i, center) in enumerate(shape.face_centers)
+        z = center[3]
+        z ≤ 0 && continue  # Skip if the face is behind the camera
+
+        u, v = project_point_fov(center, fov_angles, img_size)
+
+        if 1 ≤ u ≤ width && 1 ≤ v ≤ height
+            push!(projected_faces, ProjectedFace(u, v, z, i))
+        end
+    end
+
+    return projected_faces
 end
