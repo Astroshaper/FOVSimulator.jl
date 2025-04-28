@@ -21,5 +21,6 @@ export angle_rad, angle_deg
 export solar_phase_angle, solar_elongation_angle
 
 include("fov_projection.jl")
+export ProjectedFace, project_face_centers, map_temperature_to_image
 
 end # module FOVSimulator

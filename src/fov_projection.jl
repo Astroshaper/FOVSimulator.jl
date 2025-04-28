@@ -125,3 +125,59 @@ function project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Floa
 
     return projected_faces
 end
+
+
+"""
+    map_temperature_to_image(projected_faces::Vector{ProjectedFace}, temperatures::Vector{Float64}, img_size::Tuple{Int, Int}, λ::Float64) -> Array{Float64,2}
+
+Map temperatures to an image using the Planck function to calculate radiance.
+
+# Arguments
+- `projected_faces` : Vector of ProjectedFace objects with pixel coordinates and face indices
+- `temperatures`    : Vector of temperatures [K] corresponding to face indices
+- `img_size`        : Tuple of image size (width [pixels], height [pixels])
+- `λ`               : Wavelength [m]
+
+# Returns
+- `img`             : 2D array of radiance values [W/m²/sr/μm]
+"""
+function map_temperature_to_image(projected_faces::Vector{ProjectedFace}, temperatures::Vector{Float64}, img_size::Tuple{Int, Int}, λ::Float64)
+    width, height = img_size
+    
+    # Initialize image and z-buffer
+    img = zeros(Float64, height, width)
+    z_buffer = fill(Inf, height, width)
+    
+    # Physical constants
+    h = 6.62607015e-34  # Planck constant [J s]
+    c = 2.99792458e8    # Speed of light [m/s]
+    k = 1.380649e-23    # Boltzmann constant [J/K]
+    
+    # Process each projected face
+    for face in projected_faces
+        u, v, z, face_index = face.u, face.v, face.z, face.face_index
+        
+        # Check if this face is closer to the camera than what's already in the z-buffer
+        if z < z_buffer[v, u]
+            # Get temperature for this face
+            T = temperatures[face_index]
+            
+            # Calculate radiance using Planck function
+            # B(λ,T) = (2hc²/λ⁵) / (exp(hc/λkT) - 1)
+            numerator = 2.0 * h * c^2 / λ^5
+            denominator = exp((h * c) / (λ * k * T)) - 1.0
+            
+            # Calculate spectral radiance [W/m²/sr/m]
+            radiance = numerator / denominator
+            
+            # Convert to [W/m²/sr/μm]
+            radiance_μm = radiance * 1.0e-6
+            
+            # Update image and z-buffer
+            img[v, u] = radiance_μm
+            z_buffer[v, u] = z
+        end
+    end
+    
+    return img
+end
