@@ -123,10 +123,11 @@
     @testset "SpiceAsteroid basic struct" begin
         path_shape_deimos = joinpath("shape", paths_shape[2])
         shape_deimos = AsteroidThermoPhysicalModels.load_shape_obj(path_shape_deimos; scale=1000, find_visible_facets=false)
-        deimos = SpiceAsteroid("DEIMOS", shape_deimos)
+        deimos = SpiceAsteroid("DEIMOS", shape_deimos, "DEIMOS_FIXED")
 
-        @test deimos.static.name    == "DEIMOS"
-        @test deimos.static.shape   === shape_deimos
+        @test deimos.static.name                 == "DEIMOS"
+        @test deimos.static.shape                == shape_deimos
+        @test deimos.static.asteroid_fixed_frame == "DEIMOS_FIXED"
         @test deimos.state.position == SVector(0.0, 0.0, 0.0)
         @test deimos.state.velocity == SVector(0.0, 0.0, 0.0)
 
@@ -135,6 +136,8 @@
         
         str = sprint(show, deimos)
         @test occursin("Asteroid parameters", str)
+        @test occursin("Fixed frame", str)
+        @test occursin("DEIMOS_FIXED", str)
     end
 
     ##==== Unit tests for custom structure: `SpiceSpacecraft` ====##

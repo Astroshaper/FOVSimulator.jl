@@ -4,12 +4,14 @@
 A structure holding static asteroid information.
 
 # Fields
-- `name`  : Asteroid name
-- `shape` : Shape model
+- `name`                : Asteroid name
+- `shape`               : Shape model
+- `asteroid_fixed_frame`: Name of the asteroid-fixed reference frame
 """
 struct SpiceAsteroidStatic
     name::String
     shape::ShapeModel
+    asteroid_fixed_frame::String
 end
 
 """
@@ -42,17 +44,18 @@ end
 
 
 """
-    SpiceAsteroid(name::String, shape::ShapeModel)
+    SpiceAsteroid(name::String, shape::ShapeModel, asteroid_fixed_frame::String)
 
 Construct an asteroid model.
 
 # Arguments
-- `name`  : Asteroid name
-- `shape` : Shape model
+- `name`                : Asteroid name
+- `shape`               : Shape model
+- `asteroid_fixed_frame`: Name of the asteroid-fixed reference frame
 """
-function SpiceAsteroid(name::String, shape::ShapeModel)
+function SpiceAsteroid(name::String, shape::ShapeModel, asteroid_fixed_frame::String)
     # Create static information structure
-    static = SpiceAsteroidStatic(name, shape)
+    static = SpiceAsteroidStatic(name, shape, asteroid_fixed_frame)
     
     # Initialize dynamic information
     position = @SVector zeros(3)
@@ -72,6 +75,9 @@ function Base.show(io::IO, asteroid::SpiceAsteroid)
     msg =  "Asteroid parameters\n"
     msg *= "-------------------\n"
     msg *= "Asteroid name : $(asteroid.static.name)\n"
+    if !isempty(asteroid.static.asteroid_fixed_frame)
+        msg *= "Fixed frame   : $(asteroid.static.asteroid_fixed_frame)\n"
+    end
     msg *= "Position      : $(asteroid.state.position)\n"
     msg *= "Velocity      : $(asteroid.state.velocity)\n"
     msg *= "-------------------\n"
