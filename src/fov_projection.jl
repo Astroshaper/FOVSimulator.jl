@@ -116,7 +116,7 @@ function project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Floa
         z = center[3]
         z ≤ 0 && continue  # Skip if the face is behind the camera
 
-        u, v = project_point_fov(center, fov_angles, img_size)
+        u, v = project_point_to_fov(center, fov_angles, img_size)
 
         if 1 ≤ u ≤ width && 1 ≤ v ≤ height
             push!(projected_faces, ProjectedFace(u, v, z, i))
@@ -143,41 +143,91 @@ Map temperatures to an image using the Planck function to calculate radiance.
 """
 function map_temperature_to_image(projected_faces::Vector{ProjectedFace}, temperatures::Vector{Float64}, img_size::Tuple{Int, Int}, λ::Float64)
     width, height = img_size
-    
+
     # Initialize image and z-buffer
     img = zeros(Float64, height, width)
     z_buffer = fill(Inf, height, width)
-    
+
     # Physical constants
     h = 6.62607015e-34  # Planck constant [J s]
     c = 2.99792458e8    # Speed of light [m/s]
     k = 1.380649e-23    # Boltzmann constant [J/K]
-    
+
     # Process each projected face
     for face in projected_faces
         u, v, z, face_index = face.u, face.v, face.z, face.face_index
-        
+
         # Check if this face is closer to the camera than what's already in the z-buffer
         if z < z_buffer[v, u]
             # Get temperature for this face
             T = temperatures[face_index]
-            
+
             # Calculate radiance using Planck function
             # B(λ,T) = (2hc²/λ⁵) / (exp(hc/λkT) - 1)
             numerator = 2.0 * h * c^2 / λ^5
             denominator = exp((h * c) / (λ * k * T)) - 1.0
-            
+
             # Calculate spectral radiance [W/m²/sr/m]
             radiance = numerator / denominator
-            
+
             # Convert to [W/m²/sr/μm]
             radiance_μm = radiance * 1.0e-6
-            
+
             # Update image and z-buffer
             img[v, u] = radiance_μm
             z_buffer[v, u] = z
         end
     end
+
+    return img
+end
+
+
+"""
+    simulate_image(asteroid::SpiceAsteroid, spacecraft::SpiceSpacecraft, camera_name::String, 
+                  temperatures::Vector{Float64}, et::Float64, abcorr::String) -> Array{Float64,2}
+
+シミュレーションによる小惑星の熱画像を生成する。
+
+# 引数
+- `asteroid`     : 小惑星モデル（小惑星固定座標系で定義されたShapeModelを持つ）
+- `spacecraft`   : 探査機モデル（搭載カメラの位置と姿勢情報を持つ）
+- `camera_name`  : 使うカメラの名前（探査機に搭載されたカメラ名）
+- `temperatures` : 小惑星の各面の温度 [K]、face数と同じ長さ
+- `et`           : エフェメリス時刻（J2000秒）
+- `abcorr`       : 光行差補正フラグ（例："LT+S"）
+
+# 戻り値
+- `img`          : 画素ごとの放射輝度 [W/m²/sr/μm] を格納した2D配列
+"""
+function simulate_image(
+    asteroid::SpiceAsteroid,
+    spacecraft::SpiceSpacecraft,
+    camera_name::String,
+    temperatures::Vector{Float64},
+    et::Float64,
+    abcorr::String,
+)
+    
+    # カメラオブジェクトを探査機から取得
+    camera = spacecraft.state.instruments[camera_name]
+    
+    # 形状モデルを小惑星固定座標系からカメラ座標系への変換
+    from = asteroid.static.asteroid_fixed_frame  # 小惑星固定座標系
+    to = camera.static.fov_frame  # カメラ座標系
+    obs = camera_name
+
+    transformed_shape = transform_shape(asteroid, from, to, et, abcorr, obs)
+    
+    # 座標変換後の形状モデルの各面中心をカメラ画像に投影
+    # カメラの視野角と画像サイズを使用
+    fov_angles = camera.static.fov_angles  # カメラの視野角（水平・垂直）
+    img_size = camera.static.img_size      # カメラの画像サイズ
+    projected_faces = project_face_centers(transformed_shape, fov_angles, img_size)
+    
+    # 4. 投影された情報をもとに、温度から放射輝度マップを作成
+    λ = 10.0e-6  # [m]. 波長は10μm（熱赤外線）と仮定
+    img = map_temperature_to_image(projected_faces, temperatures, img_size, λ)
     
     return img
 end
