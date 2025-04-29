@@ -99,8 +99,10 @@
 
     ##==== Test SPICE integration for HERA_TIRI camera ====##
     @testset "HERA_TIRI SPICE integration" begin
-        TIRI_ID = -91200
-        cam = SpiceCamera("HERA_TIRI", TIRI_ID)
+        TIRI_ID    = -91200
+        fov_angles = (13.3, 10.0)  # TIRI's FOV angles (width, height) in degrees
+        img_size   = (1024, 768)   # TIRI's image size (width, height) in pixels
+        cam = SpiceCamera("HERA_TIRI", TIRI_ID, fov_angles, img_size)
         
         ## Validate static parameters
         @test cam.static.name == "HERA_TIRI"
@@ -150,7 +152,9 @@
         @test isempty(hera.state.instruments)
 
         TIRI_ID = -91200
-        tiri = SpiceCamera("HERA_TIRI", TIRI_ID)
+        fov_angles = (45.0, 45.0)  # 水平・垂直視野角（度）
+        img_size = (256, 256)      # 画像サイズ（横・縦ピクセル数）
+        tiri = SpiceCamera("HERA_TIRI", TIRI_ID, fov_angles, img_size)
         add_instrument!(hera, tiri)
 
         @test length(hera.state.instruments) == 1

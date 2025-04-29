@@ -8,16 +8,20 @@ A structure holding static camera information.
 - `id`         : Camera ID
 - `fov_shape`  : FOV shape ("RECTANGLE", "CIRCLE", "ELLIPSE", etc.)
 - `fov_frame`  : FOV reference frame
-- `boresight` : Boresight vector in the FOV reference frame
-- `bounds`    : FOV boundary vectors in the FOV reference frame
+- `boresight`  : Boresight vector in the FOV reference frame
+- `bounds`     : FOV boundary vectors in the FOV reference frame
+- `fov_angles` : Field of view angles (width, height) in degrees
+- `img_size`   : Image size (width, height) in pixels
 """
 struct SpiceCameraStatic
-    name::String
-    id::Int
-    fov_shape::String
-    fov_frame::String
-    boresight::SVector{3, Float64}
-    bounds::Vector{SVector{3, Float64}}
+    name       ::String
+    id         ::Int
+    fov_shape  ::String
+    fov_frame  ::String
+    boresight  ::SVector{3, Float64}
+    bounds     ::Vector{SVector{3, Float64}}
+    fov_angles ::Tuple{Float64, Float64}
+    img_size   ::Tuple{Int, Int}
 end
 
 """
@@ -53,12 +57,12 @@ struct SpiceCamera
 end
 
 
-function SpiceCamera(name::String, id::Int)
+function SpiceCamera(name::String, id::Int, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
     # Get static information from SPICE kernel
     fov_shape, fov_frame, boresight, bounds = SPICE.getfov(id)
     
     # Create static information structure
-    static = SpiceCameraStatic(name, id, fov_shape, fov_frame, boresight, bounds)
+    static = SpiceCameraStatic(name, id, fov_shape, fov_frame, boresight, bounds, fov_angles, img_size)
     
     # Initialize dynamic information
     state_boresight = similar(boresight)
@@ -83,6 +87,8 @@ function Base.show(io::IO, cam::SpiceCamera)
     msg *= "Instrument ID        : $(cam.static.id)\n"
     msg *= "FOV shape            : $(cam.static.fov_shape)\n"
     msg *= "FOV reference frame  : $(cam.static.fov_frame)\n"
+    msg *= "FOV angles (h,v)     : $(cam.static.fov_angles) deg\n"
+    msg *= "Image size (w,h)     : $(cam.static.img_size) px\n"
     msg *= "Boresight vector     : $(cam.static.boresight)\n"
     msg *= "FOV boundary vectors : \n"
     for v in cam.static.bounds
