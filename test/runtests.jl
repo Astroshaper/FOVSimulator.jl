@@ -30,4 +30,10 @@ end
 end
 
 
-include("HERA/HERA.jl")
+include("HERA.jl")
+
+# Simple ray intersection tests
+include("simple_ray_intersection.jl")
+
+# Ray intersection tests with SPICE comparison
+include("ray_intersection/ray_intersection_test.jl")
