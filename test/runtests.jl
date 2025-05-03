@@ -32,8 +32,5 @@ end
 
 include("HERA.jl")
 
-# Simple ray intersection tests
-include("simple_ray_intersection.jl")
-
-# Ray intersection tests with SPICE comparison
-include("ray_intersection/ray_intersection_test.jl")
+include("ray_intersection_simple_cases.jl")  # Simple ray intersection tests
+include("ray_intersection_vs_DSK.jl")        # Ray intersection tests with SPICE comparison
