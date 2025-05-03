@@ -1,13 +1,10 @@
 """
     ray_intersection.jl
 
-小惑星の形状モデルに対するレイと表面の交差判定処理を実装するモジュール。
+小惑星の形状モデルに対するレイと表面の交差判定処理を実装する。
 Möller–Trumbore法を用いたレイと三角形メッシュの交差判定を提供する。
 """
 
-using LinearAlgebra
-using StaticArrays
-using AsteroidThermoPhysicalModels
 
 """
     Ray
