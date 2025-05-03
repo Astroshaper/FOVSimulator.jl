@@ -42,8 +42,8 @@ struct RayTriangleIntersectionResult
     point::SVector{3, Float64}
 end
 
-# 交差なしの結果を表す定数
-const NO_INTERSECTION = RayTriangleIntersectionResult(false, 0.0, @SVector zeros(3))
+# レイと三角形の交差なしの結果を表す定数
+const NO_INTERSECTION_RAY_TRIANGLE = RayTriangleIntersectionResult(false, 0.0, @SVector zeros(3))
 
 """
     intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::AbstractVector{<:Real}, v3::AbstractVector{<:Real}) -> RayTriangleIntersectionResult
@@ -72,7 +72,7 @@ function intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::Abstra
     
     # 行列式がほぼ0の場合、レイは三角形と平行
     if abs(det) < 1e-8
-        return NO_INTERSECTION
+        return NO_INTERSECTION_RAY_TRIANGLE
     end
     
     inv_det = 1.0 / det
@@ -85,7 +85,7 @@ function intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::Abstra
     
     # u座標が三角形の範囲外
     if u < 0.0 || u > 1.0
-        return NO_INTERSECTION
+        return NO_INTERSECTION_RAY_TRIANGLE
     end
     
     # tとe1の外積
@@ -96,7 +96,7 @@ function intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::Abstra
     
     # v座標が三角形の範囲外、またはu+vが1を超える
     if v < 0.0 || u + v > 1.0
-        return NO_INTERSECTION
+        return NO_INTERSECTION_RAY_TRIANGLE
     end
     
     # 交点までの距離
@@ -110,7 +110,7 @@ function intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::Abstra
     end
     
     # 交点がレイの負の方向にある場合（レイの背後）
-    return NO_INTERSECTION
+    return NO_INTERSECTION_RAY_TRIANGLE
 end
 
 """
@@ -131,8 +131,8 @@ struct RayShapeIntersectionResult
     face_index::Int
 end
 
-# 形状モデルとの交差なしの結果を表す定数
-const NO_SHAPE_INTERSECTION = RayShapeIntersectionResult(false, 0.0, @SVector(zeros(3)), 0)
+# レイと形状モデルの交差なしの結果を表す定数
+const NO_INTERSECTION_RAY_SHAPE = RayShapeIntersectionResult(false, 0.0, @SVector(zeros(3)), 0)
 
 """
     intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.ShapeModel) -> RayShapeIntersectionResult
@@ -174,7 +174,7 @@ function intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.Shape
     if hit_any
         return RayShapeIntersectionResult(true, min_distance, closest_point, hit_face_index)
     else
-        return NO_SHAPE_INTERSECTION
+        return NO_INTERSECTION_RAY_SHAPE
     end
 end
 
