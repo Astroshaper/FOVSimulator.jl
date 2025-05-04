@@ -1,5 +1,12 @@
 
 @testset "Ray-Triangle Intersection" begin
+    msg = """\n
+    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    |            Test: Ray-Triangle Intersection             |
+    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+    """
+    println(msg)
+
     # 単一の三角形を定義
     # この三角形はxy平面上にある
     v1 = @SVector [0.0, 0.0, 0.0]  # 原点

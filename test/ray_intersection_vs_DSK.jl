@@ -1,5 +1,11 @@
 
 @testset "Ray-Shape Intersection vs. SPICE/DSK" begin
+    msg = """\n
+    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    |       Test: Ray-Shape Intersection vs. SPICE/DSK       |
+    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+    """
+    println(msg)
 
     ##==== Download Files ====##
 
@@ -145,20 +151,20 @@
     diff = norm(spoint - intersection.point)  # 交差判定結果の差 [m]
     @test diff < 0.01  # 交差判定結果の差が許容誤差未満であることを確認
 
-    println()
     println("Intersection point [m]")
     println("    ∘ FOVSimulator.jl : $(intersection.point)")
     println("    ∘ SPICE/DSK       : $spoint")
     println("    → Difference between them : $diff m")
+    println()
     
     #### 実行時間の比較 ####
-
-    println()
+    
     println("Computation time")
     print("    ∘ intersect_ray_shape in FOVSimulator.jl :")
     @time intersect_ray_shape(ray, shape)
     print("    ∘ sincpt in SPICE.jl                     :")
     @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
+    println()
 
     SPICE.kclear()  # SPICEカーネルをアンロード
 end
