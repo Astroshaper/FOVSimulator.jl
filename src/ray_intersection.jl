@@ -27,6 +27,24 @@ struct Ray
 end
 
 """
+    Base.show(io::IO, ray::Ray)
+
+Rayオブジェクトを表示するための関数。
+
+# 引数
+- `io`  : 出力ストリーム
+- `ray` : 表示するRayオブジェクト
+"""
+function Base.show(io::IO, ray::Ray)
+    msg = """
+    Ray:
+        ∘ origin    = $(ray.origin)
+        ∘ direction = $(ray.direction)
+    """
+    print(io, msg)
+end
+
+"""
     RayTriangleIntersectionResult
 
 レイと三角形の交差判定結果を表す構造体。
@@ -44,6 +62,33 @@ end
 
 # レイと三角形の交差なしの結果を表す定数
 const NO_INTERSECTION_RAY_TRIANGLE = RayTriangleIntersectionResult(false, 0.0, @SVector zeros(3))
+
+"""
+    Base.show(io::IO, result::RayTriangleIntersectionResult)
+
+RayTriangleIntersectionResultオブジェクトを表示するための関数。
+
+# 引数
+- `io`     : 出力ストリーム
+- `result` : 表示するRayTriangleIntersectionResultオブジェクト
+"""
+function Base.show(io::IO, result::RayTriangleIntersectionResult)
+    if result.hit
+        msg = """
+        Ray-Triangle Intersection:
+            ∘ hit      = $(result.hit)
+            ∘ distance = $(result.distance)
+            ∘ point    = $(result.point)
+        """
+        print(io, msg)
+    else
+        msg = """
+        Ray-Triangle Intersection:
+            ∘ hit = $(result.hit)
+        """
+        print(io, msg)
+    end
+end
 
 """
     intersect_ray_triangle(ray::Ray, v1::AbstractVector{<:Real}, v2::AbstractVector{<:Real}, v3::AbstractVector{<:Real}) -> RayTriangleIntersectionResult
@@ -133,6 +178,35 @@ end
 
 # レイと形状モデルの交差なしの結果を表す定数
 const NO_INTERSECTION_RAY_SHAPE = RayShapeIntersectionResult(false, 0.0, @SVector(zeros(3)), 0)
+
+"""
+    Base.show(io::IO, result::RayShapeIntersectionResult)
+
+RayShapeIntersectionResultオブジェクトを表示するための関数。
+
+# 引数
+- `io`     : 出力ストリーム
+- `result` : 表示するRayShapeIntersectionResultオブジェクト
+"""
+function Base.show(io::IO, result::RayShapeIntersectionResult)
+    if result.hit
+        msg = """
+        Ray-Shape Intersection:
+            ∘ hit        = $(result.hit)
+            ∘ distance   = $(result.distance)
+            ∘ point      = $(result.point)
+            ∘ face_index = $(result.face_index)
+        """
+        print(io, msg)
+    else
+        msg = """
+        Ray-Shape Intersection:
+            ∘ hit = $(result.hit)
+        """
+        print(io, msg)
+    end
+end
+
 
 """
     intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.ShapeModel) -> RayShapeIntersectionResult
