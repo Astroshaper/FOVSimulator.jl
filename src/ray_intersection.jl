@@ -228,6 +228,15 @@ function intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.Shape
     
     # 形状モデルの全ての面について交差判定
     for (i, face) in enumerate(shape.faces)
+
+        ## Early-out 1: Backface culling (skip if ray is coming from the backside of the face)
+        n̂ = shape.face_normals[i]
+        dot(ray.direction, n̂) ≥ 0 && continue  # skip this face
+
+        ## Early-out 2: Visibility check from observer
+        c = shape.face_centers[i]
+        dot(c - ray.origin, n̂) ≥ 0 && continue  # skip this face
+        
         # 面を構成する頂点
         v1 = shape.nodes[face[1]]
         v2 = shape.nodes[face[2]]
