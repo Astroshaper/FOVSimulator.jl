@@ -127,6 +127,7 @@
     # @show intersection.point
 
     #### SPICEのsincpt関数を用いた交差判定 ####
+    ## cf. https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sincpt_c.html
 
     spoint, trgepc, srfvec = SPICE.sincpt(
         "DSK/UNPRIORITIZED",          # 形状モデルの種類（DSKカーネルが読み込まれている場合は自動的にDSKが使用される）
