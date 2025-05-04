@@ -108,7 +108,7 @@
     
     ref    = "DIDYMOS_FIXED"
     abcorr = "NONE"  # 光行差補正なし
-    # abcorr = "LT+S"  # 光行差補正あり
+    # abcorr = "LT+S"  # 光行差補正あり（交差点が0.0012 m程度変わる）
     obs    = "DIDYMOS"
 
     update!(cam, et, ref, abcorr, obs)
@@ -128,8 +128,8 @@
         et,                           # エフェメリス時刻
         ref,                          # 対象天体の座標系
         abcorr,                       # 光行差補正フラグ
-        "HERA",                       # 観測者の名前
-        "HERA_TIRI",                  # 参照座標系
+        cam.static.name,              # 観測者の名前
+        cam.static.fov_frame,         # 参照座標系
         collect(cam.static.boresight) # レイの方向ベクトル。ccallのエラーを防ぐため、Vector{Float64}型に変換してsincptに渡す
     )
 
@@ -142,8 +142,8 @@
 
     #### 交差判定結果の比較 ####
 
-    diff = norm(spoint - intersection.point)
-    @test diff < 1  # 1m未満の誤差であることを確認
+    diff = norm(spoint - intersection.point)  # 交差判定結果の差 [m]
+    @test diff < 0.01  # 交差判定結果の差が許容誤差未満であることを確認
 
     println()
     println("Intersection point [m]")
