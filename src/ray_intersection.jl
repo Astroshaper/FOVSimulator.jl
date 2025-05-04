@@ -61,10 +61,10 @@ struct RayTriangleIntersectionResult
 end
 
 # レイと三角形の交差なしの結果を表す定数
-const NO_INTERSECTION_RAY_TRIANGLE = RayTriangleIntersectionResult(false, 0.0, @SVector zeros(3))
+const NO_INTERSECTION_RAY_TRIANGLE = RayTriangleIntersectionResult(false, NaN, SVector(NaN, NaN, NaN))
 
 """
-    Base.show(io::IO, result::RayTriangleIntersectionResult)
+    Base.show(io::IO, result::RayTriangleIntersectionResult
 
 RayTriangleIntersectionResultオブジェクトを表示するための関数。
 
@@ -177,7 +177,7 @@ struct RayShapeIntersectionResult
 end
 
 # レイと形状モデルの交差なしの結果を表す定数
-const NO_INTERSECTION_RAY_SHAPE = RayShapeIntersectionResult(false, 0.0, @SVector(zeros(3)), 0)
+const NO_INTERSECTION_RAY_SHAPE = RayShapeIntersectionResult(false, NaN, SVector(NaN, NaN, NaN), 0)
 
 """
     Base.show(io::IO, result::RayShapeIntersectionResult)
