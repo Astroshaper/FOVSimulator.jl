@@ -96,6 +96,7 @@
 
     obj_path = joinpath("shape", "g_01165mm_spc_obj_didy_0000n00000_v003.obj")
     shape = AsteroidThermoPhysicalModels.load_shape_obj(obj_path; scale=1000, find_visible_facets=false)
+    println(shape)
 
     TIRI_ID    = -91200
     fov_angles = (13.3, 10.0)  # TIRI's FOV angles (width, height) in degrees
@@ -112,15 +113,15 @@
 
     update!(cam, et, ref, abcorr, obs)
     ray = Ray(cam.state.position, cam.state.boresight)
-    intersection = intersect_ray_shape(ray, shape)
-
+    intersection = intersect_ray_shape(ray, shape)  # 交差判定の結果
+    
     # @show ray.origin
     # @show ray.direction
     # @show intersection.distance
     # @show intersection.point
 
     #### SPICEのsincpt関数を用いた交差判定 ####
-        
+
     spoint, trgepc, srfvec = SPICE.sincpt(
         "DSK/UNPRIORITIZED",          # 形状モデルの種類（DSKカーネルが読み込まれている場合は自動的にDSKが使用される）
         obs,                          # 対象天体の名前
@@ -144,10 +145,20 @@
     diff = norm(spoint - intersection.point)
     @test diff < 1  # 1m未満の誤差であることを確認
 
+    println()
     println("Intersection point [m]")
     println("    ∘ FOVSimulator.jl : $(intersection.point)")
     println("    ∘ SPICE/DSK       : $spoint")
     println("    → Difference between them : $diff m")
+    
+    #### 実行時間の比較 ####
+
+    println()
+    println("Computation time")
+    print("    ∘ intersect_ray_shape in FOVSimulator.jl :")
+    @time intersect_ray_shape(ray, shape)
+    print("    ∘ sincpt in SPICE.jl                     :")
+    @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
 
     SPICE.kclear()  # SPICEカーネルをアンロード
 end
