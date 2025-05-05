@@ -19,17 +19,6 @@ using Test
     @test solar_elongation_angle(sun, obs, tgt) ≈ deg2rad(45)
 end
 
-
-@testset "Projection functions" begin
-    @test FOVSimulator.focal_length(90, 100) ≈ 50
-
-    p = SVector(1.0, 0.0, 1.0)
-    fov = (90.0, 90.0)
-    img = (100, 100)
-    @test FOVSimulator.project_point_to_fov(p, fov, img) == (100, 50)
-end
-
-
 include("HERA.jl")
 
 include("ray_intersection_simple_cases.jl")  # Simple ray intersection tests

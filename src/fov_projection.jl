@@ -1,228 +1,228 @@
-"""
-    transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String) -> shape_new
+# """
+#     transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String) -> shape_new
 
-Transform the shape of an asteroid to a new reference frame.
+# Transform the shape of an asteroid to a new reference frame.
 
-# Arguments
-- `asteroid` : Asteroid
-- `from`     : Reference frame to transform from (asteroid-fixed frame)
-- `to`       : Reference frame to transform to
-- `et`       : Ephemeris time
-- `abcorr`   : Aberration correction
-- `obs`      : Observing body name
+# # Arguments
+# - `asteroid` : Asteroid
+# - `from`     : Reference frame to transform from (asteroid-fixed frame)
+# - `to`       : Reference frame to transform to
+# - `et`       : Ephemeris time
+# - `abcorr`   : Aberration correction
+# - `obs`      : Observing body name
 
-# Returns
-- `shape_new` : Transformed shape model
-"""
-function transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String)
+# # Returns
+# - `shape_new` : Transformed shape model
+# """
+# function transform_shape(asteroid::SpiceAsteroid, from::String, to::String, et::Float64, abcorr::String, obs::String)
 
-    Rot = RotMatrix{3}(SPICE.pxform(from, to, et))
-    target_pos = SVector{3}(SPICE.spkpos(asteroid.static.name, et, to, abcorr, obs)[1]) * 1000
+#     Rot = RotMatrix{3}(SPICE.pxform(from, to, et))
+#     target_pos = SVector{3}(SPICE.spkpos(asteroid.static.name, et, to, abcorr, obs)[1]) * 1000
 
-    shape = asteroid.static.shape
-    nodes = [Rot * node + target_pos for node in shape.nodes]
-    faces = shape.faces
+#     shape = asteroid.static.shape
+#     nodes = [Rot * node + target_pos for node in shape.nodes]
+#     faces = shape.faces
     
-    face_centers  = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
-    face_normals  = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
-    face_areas    = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
-    visiblefacets = shape.visiblefacets
+#     face_centers  = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
+#     face_normals  = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
+#     face_areas    = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
+#     visiblefacets = shape.visiblefacets
 
-    shape_new = ShapeModel(nodes, faces, face_centers, face_normals, face_areas, visiblefacets)
+#     shape_new = ShapeModel(nodes, faces, face_centers, face_normals, face_areas, visiblefacets)
     
-    return shape_new
-end
+#     return shape_new
+# end
 
 
-"""
-    focal_length(fov_angle::Float64, n_pixel::Int) -> f
+# """
+#     focal_length(fov_angle::Float64, n_pixel::Int) -> f
 
-Calculate a focal length of a camera.
+# Calculate a focal length of a camera.
 
-# Arguments
-- `fov_angle` : Field of view angle [deg]
-- `n_pixel`   : Number of pixels
-"""
-focal_length(fov_angle::Real, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_angle) / 2))
+# # Arguments
+# - `fov_angle` : Field of view angle [deg]
+# - `n_pixel`   : Number of pixels
+# """
+# focal_length(fov_angle::Real, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_angle) / 2))
 
 
-"""
-    project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> Tuple{Int, Int}
+# """
+#     project_point_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> Tuple{Int, Int}
 
-Project a 3D point onto a 2D image plane using the field-of-view angles and image size.
+# Project a 3D point onto a 2D image plane using the field-of-view angles and image size.
 
-# Arguments
-- `p`          : 3D point in space (SVector{3, Float64})
-- `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
-- `img_size`   : Tuple of image size (width [pixels], height [pixels])
+# # Arguments
+# - `p`          : 3D point in space (SVector{3, Float64})
+# - `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
+# - `img_size`   : Tuple of image size (width [pixels], height [pixels])
 
-# Returns
-- `(u, v)`     : 2D pixel coordinates of the projected point (rounded to nearest integer)
-"""
-function project_point_to_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
-    fov_x, fov_y = fov_angles
-    width, height = img_size
+# # Returns
+# - `(u, v)`     : 2D pixel coordinates of the projected point (rounded to nearest integer)
+# """
+# function project_point_to_fov(p::SVector{3, Float64}, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
+#     fov_x, fov_y = fov_angles
+#     width, height = img_size
 
-    f_x = focal_length(fov_x, width)   # focal length in the x-direction [pixel]
-    f_y = focal_length(fov_y, height)  # focal length in the y-direction [pixel]
+#     f_x = focal_length(fov_x, width)   # focal length in the x-direction [pixel]
+#     f_y = focal_length(fov_y, height)  # focal length in the y-direction [pixel]
 
-    c_x = width  / 2  # x-coordinate of the principal point
-    c_y = height / 2  # y-coordinate of the principal point
+#     c_x = width  / 2  # x-coordinate of the principal point
+#     c_y = height / 2  # y-coordinate of the principal point
 
-    u = round(Int, f_x * p[1] / p[3] + c_x)
-    v = round(Int, f_y * p[2] / p[3] + c_y)
+#     u = round(Int, f_x * p[1] / p[3] + c_x)
+#     v = round(Int, f_y * p[2] / p[3] + c_y)
     
-    return (u, v)
-end
+#     return (u, v)
+# end
 
 
-"""
-    struct ProjectedFace
+# """
+#     struct ProjectedFace
 
-Struct for storing projected face information to a camera frame.
+# Struct for storing projected face information to a camera frame.
 
-# Fields
-- `u`          : pixel u-coordinate (column)
-- `v`          : pixel v-coordinate (row)
-- `z`          : depth (distance from camera)
-- `face_index` : original face index
-"""
-struct ProjectedFace
-    u::Int
-    v::Int
-    z::Float64
-    face_index::Int
-end
-
-
-"""
-    project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> projections
-
-Project the face centers of a ShapeModel onto image coordinates.
-
-# Arguments
-- `shape`      : ShapeModel transformed into the camera frame
-- `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
-- `img_size`   : Tuple of image size (width [pixels], height [pixels])
-
-# Returns
-- `projections` : Vector of `ProjectedFace` objects
-"""
-function project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
-    width, height = img_size
-    projected_faces = ProjectedFace[]
-
-    for (i, center) in enumerate(shape.face_centers)
-        z = center[3]
-        z ≤ 0 && continue  # Skip if the face is behind the camera
-
-        u, v = project_point_to_fov(center, fov_angles, img_size)
-
-        if 1 ≤ u ≤ width && 1 ≤ v ≤ height
-            push!(projected_faces, ProjectedFace(u, v, z, i))
-        end
-    end
-
-    return projected_faces
-end
+# # Fields
+# - `u`          : pixel u-coordinate (column)
+# - `v`          : pixel v-coordinate (row)
+# - `z`          : depth (distance from camera)
+# - `face_index` : original face index
+# """
+# struct ProjectedFace
+#     u::Int
+#     v::Int
+#     z::Float64
+#     face_index::Int
+# end
 
 
-"""
-    map_temperature_to_image(projected_faces::Vector{ProjectedFace}, img_size::Tuple{Int, Int}, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> Array{Float64,2}
+# """
+#     project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int}) -> projections
 
-Map temperatures to an image using the Stefan-Boltzmann law to calculate total radiance across all wavelengths.
+# Project the face centers of a ShapeModel onto image coordinates.
 
-# Arguments
-- `projected_faces` : Vector of ProjectedFace objects with pixel coordinates and face indices
-- `img_size`        : Tuple of image size (width [pixels], height [pixels])
-- `emissivities`    : Vector of emissivity values (0-1) corresponding to face indices
-- `temperatures`    : Vector of temperatures [K] corresponding to face indices
+# # Arguments
+# - `shape`      : ShapeModel transformed into the camera frame
+# - `fov_angles` : Tuple of field-of-view angles (width [deg], height [deg])
+# - `img_size`   : Tuple of image size (width [pixels], height [pixels])
 
-# Returns
-- `img`             : 2D array of radiance values [W/m²/sr]
-"""
-function map_temperature_to_image(projected_faces::Vector{ProjectedFace}, img_size::Tuple{Int, Int}, emissivities::Vector{Float64}, temperatures::Vector{Float64})
-    width, height = img_size
+# # Returns
+# - `projections` : Vector of `ProjectedFace` objects
+# """
+# function project_face_centers(shape::ShapeModel, fov_angles::Tuple{Float64, Float64}, img_size::Tuple{Int, Int})
+#     width, height = img_size
+#     projected_faces = ProjectedFace[]
 
-    # Initialize image and z-buffer
-    img = zeros(Float64, height, width)
-    z_buffer = fill(Inf, height, width)
+#     for (i, center) in enumerate(shape.face_centers)
+#         z = center[3]
+#         z ≤ 0 && continue  # Skip if the face is behind the camera
 
-    # Physical constants
-    σ = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
-    π = Float64(Base.π)  # Pi
+#         u, v = project_point_to_fov(center, fov_angles, img_size)
 
-    # Process each projected face
-    for face in projected_faces
-        u, v, z, face_index = face.u, face.v, face.z, face.face_index
+#         if 1 ≤ u ≤ width && 1 ≤ v ≤ height
+#             push!(projected_faces, ProjectedFace(u, v, z, i))
+#         end
+#     end
 
-        # Check if this face is closer to the camera than what's already in the z-buffer
-        if z < z_buffer[v, u]
-            # Get emissivity and temperature for this face
-            ε = emissivities[face_index]
-            T = temperatures[face_index]
-
-            # Calculate total radiance using Stefan-Boltzmann law with emissivity
-            # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
-            # L = E/π [W/m²/sr] (radiance assuming Lambertian surface)
-            radiance = ε * σ * T^4 / π  # [W/m²/sr]
-
-            # Update image and z-buffer
-            img[v, u] = radiance
-            z_buffer[v, u] = z
-        end
-    end
-
-    return img
-end
+#     return projected_faces
+# end
 
 
-"""
-    simulate_image(asteroid::SpiceAsteroid, spacecraft::SpiceSpacecraft, camera_name::String, 
-                  emissivities::Vector{Float64}, temperatures::Vector{Float64}, et::Float64, abcorr::String) -> Array{Float64,2}
+# """
+#     map_temperature_to_image(projected_faces::Vector{ProjectedFace}, img_size::Tuple{Int, Int}, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> Array{Float64,2}
 
-シミュレーションによる小惑星の熱画像を生成する。
+# Map temperatures to an image using the Stefan-Boltzmann law to calculate total radiance across all wavelengths.
 
-# 引数
-- `asteroid`     : 小惑星モデル（小惑星固定座標系で定義されたShapeModelを持つ）
-- `spacecraft`   : 探査機モデル（搭載カメラの位置と姿勢情報を持つ）
-- `camera_name`  : 使うカメラの名前（探査機に搭載されたカメラ名）
-- `emissivities` : 小惑星の各面の放射率 (0-1)、face数と同じ長さ
-- `temperatures` : 小惑星の各面の温度 [K]、face数と同じ長さ
-- `et`           : エフェメリス時刻（J2000秒）
-- `abcorr`       : 光行差補正フラグ（例："LT+S"）
+# # Arguments
+# - `projected_faces` : Vector of ProjectedFace objects with pixel coordinates and face indices
+# - `img_size`        : Tuple of image size (width [pixels], height [pixels])
+# - `emissivities`    : Vector of emissivity values (0-1) corresponding to face indices
+# - `temperatures`    : Vector of temperatures [K] corresponding to face indices
 
-# 戻り値
-- `img`          : 画素ごとの放射輝度 [W/m²/sr] を格納した2D配列
-"""
-function simulate_image(
-    asteroid::SpiceAsteroid,
-    spacecraft::SpiceSpacecraft,
-    camera_name::String,
-    emissivities::Vector{Float64},
-    temperatures::Vector{Float64},
-    et::Float64,
-    abcorr::String,
-)
+# # Returns
+# - `img`             : 2D array of radiance values [W/m²/sr]
+# """
+# function map_temperature_to_image(projected_faces::Vector{ProjectedFace}, img_size::Tuple{Int, Int}, emissivities::Vector{Float64}, temperatures::Vector{Float64})
+#     width, height = img_size
+
+#     # Initialize image and z-buffer
+#     img = zeros(Float64, height, width)
+#     z_buffer = fill(Inf, height, width)
+
+#     # Physical constants
+#     σ = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
+#     π = Float64(Base.π)  # Pi
+
+#     # Process each projected face
+#     for face in projected_faces
+#         u, v, z, face_index = face.u, face.v, face.z, face.face_index
+
+#         # Check if this face is closer to the camera than what's already in the z-buffer
+#         if z < z_buffer[v, u]
+#             # Get emissivity and temperature for this face
+#             ε = emissivities[face_index]
+#             T = temperatures[face_index]
+
+#             # Calculate total radiance using Stefan-Boltzmann law with emissivity
+#             # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
+#             # L = E/π [W/m²/sr] (radiance assuming Lambertian surface)
+#             radiance = ε * σ * T^4 / π  # [W/m²/sr]
+
+#             # Update image and z-buffer
+#             img[v, u] = radiance
+#             z_buffer[v, u] = z
+#         end
+#     end
+
+#     return img
+# end
+
+
+# """
+#     simulate_image(asteroid::SpiceAsteroid, spacecraft::SpiceSpacecraft, camera_name::String, 
+#                   emissivities::Vector{Float64}, temperatures::Vector{Float64}, et::Float64, abcorr::String) -> Array{Float64,2}
+
+# シミュレーションによる小惑星の熱画像を生成する。
+
+# # 引数
+# - `asteroid`     : 小惑星モデル（小惑星固定座標系で定義されたShapeModelを持つ）
+# - `spacecraft`   : 探査機モデル（搭載カメラの位置と姿勢情報を持つ）
+# - `camera_name`  : 使うカメラの名前（探査機に搭載されたカメラ名）
+# - `emissivities` : 小惑星の各面の放射率 (0-1)、face数と同じ長さ
+# - `temperatures` : 小惑星の各面の温度 [K]、face数と同じ長さ
+# - `et`           : エフェメリス時刻（J2000秒）
+# - `abcorr`       : 光行差補正フラグ（例："LT+S"）
+
+# # 戻り値
+# - `img`          : 画素ごとの放射輝度 [W/m²/sr] を格納した2D配列
+# """
+# function simulate_image(
+#     asteroid::SpiceAsteroid,
+#     spacecraft::SpiceSpacecraft,
+#     camera_name::String,
+#     emissivities::Vector{Float64},
+#     temperatures::Vector{Float64},
+#     et::Float64,
+#     abcorr::String,
+# )
     
-    # カメラオブジェクトを探査機から取得
-    camera = spacecraft.state.instruments[camera_name]
+#     # カメラオブジェクトを探査機から取得
+#     camera = spacecraft.state.instruments[camera_name]
     
-    # 形状モデルを小惑星固定座標系からカメラ座標系への変換
-    from = asteroid.static.asteroid_fixed_frame  # 小惑星固定座標系
-    to = camera.static.fov_frame  # カメラ座標系
-    obs = camera_name
+#     # 形状モデルを小惑星固定座標系からカメラ座標系への変換
+#     from = asteroid.static.asteroid_fixed_frame  # 小惑星固定座標系
+#     to = camera.static.fov_frame  # カメラ座標系
+#     obs = camera_name
 
-    transformed_shape = transform_shape(asteroid, from, to, et, abcorr, obs)
+#     transformed_shape = transform_shape(asteroid, from, to, et, abcorr, obs)
     
-    # 座標変換後の形状モデルの各面中心をカメラ画像に投影
-    # カメラの視野角と画像サイズを使用
-    fov_angles = camera.static.fov_angles  # カメラの視野角（水平・垂直）
-    img_size = camera.static.img_size      # カメラの画像サイズ
-    projected_faces = project_face_centers(transformed_shape, fov_angles, img_size)
+#     # 座標変換後の形状モデルの各面中心をカメラ画像に投影
+#     # カメラの視野角と画像サイズを使用
+#     fov_angles = camera.static.fov_angles  # カメラの視野角（水平・垂直）
+#     img_size = camera.static.img_size      # カメラの画像サイズ
+#     projected_faces = project_face_centers(transformed_shape, fov_angles, img_size)
     
-    # 4. 投影された情報をもとに、温度と放射率から放射輝度マップを作成
-    img = map_temperature_to_image(projected_faces, img_size, emissivities, temperatures)
+#     # 4. 投影された情報をもとに、温度と放射率から放射輝度マップを作成
+#     img = map_temperature_to_image(projected_faces, img_size, emissivities, temperatures)
     
-    return img
-end
+#     return img
+# end
