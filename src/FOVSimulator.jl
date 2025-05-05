@@ -25,7 +25,7 @@ export solar_phase_angle, solar_elongation_angle
 include("ray_intersection.jl")
 export Ray, intersect_ray_triangle, intersect_ray_shape
 
-include("ray_generation.jl")
-export generate_pixel_rays
+include("image_generation.jl")
+export generate_pixel_rays, generate_thermal_image
 
 end # module FOVSimulator
