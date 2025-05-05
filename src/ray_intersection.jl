@@ -221,10 +221,10 @@ Möller–Trumbore法を用いてレイと形状モデルの交差判定を行�
 - 交差判定結果を格納した`RayShapeIntersectionResult`オブジェクト
 """
 function intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.ShapeModel)
-    min_distance = Inf
-    closest_point = @SVector zeros(3)
+    min_distance   = Inf
+    closest_point  = @SVector zeros(3)
     hit_face_index = 0
-    hit_any = false
+    hit_any        = false
     
     # 形状モデルの全ての面について交差判定
     for (i, face) in enumerate(shape.faces)
@@ -247,10 +247,10 @@ function intersect_ray_shape(ray::Ray, shape::AsteroidThermoPhysicalModels.Shape
         
         # 交差があり、これまでの最小距離よりも近い場合
         if result.hit && result.distance < min_distance
-            min_distance = result.distance
-            closest_point = result.point
+            min_distance   = result.distance
+            closest_point  = result.point
             hit_face_index = i
-            hit_any = true
+            hit_any        = true
         end
     end
     
