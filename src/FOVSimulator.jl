@@ -7,6 +7,9 @@ using StaticArrays
 import SPICE
 using AsteroidThermoPhysicalModels
 
+# Physical constants
+const σ_SB = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
+
 include("SpiceCamera.jl")
 include("SpiceSpacecraft.jl")
 include("SpiceAsteroid.jl")

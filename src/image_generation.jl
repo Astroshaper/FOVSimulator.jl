@@ -136,9 +136,6 @@ function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysical
     height, width = size(rays)
     image = zeros(Float64, height, width)
     
-    # Physical constants
-    σ = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
-    
     # Process each pixel
     for v in 1:height
         for u in 1:width
@@ -157,7 +154,7 @@ function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysical
                 # Calculate total radiance using Stefan-Boltzmann law with emissivity
                 # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
                 # L = E/π [W/m²/sr] (radiance assuming Lambertian surface)
-                radiance = ε * σ * T^4 / π  # [W/m²/sr]
+                radiance = ε * σ_SB * T^4 / π  # [W/m²/sr]
                 
                 image[v, u] = radiance
             else
