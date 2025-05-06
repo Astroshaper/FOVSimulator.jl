@@ -19,9 +19,6 @@ include("util.jl")
 export angle_rad, angle_deg
 export solar_phase_angle, solar_elongation_angle
 
-# include("fov_projection.jl")
-# export simulate_image
-
 include("ray_intersection.jl")
 export Ray, intersect_ray_triangle, intersect_ray_shape
 
