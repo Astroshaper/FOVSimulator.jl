@@ -126,12 +126,15 @@ end
 - `image`        : 画素ごとの放射輝度 [W/m²/sr] を格納した2次元配列
 """
 function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysicalModels.ShapeModel, emissivities::Vector{Float64}, temperatures::Vector{Float64})
-    # Get dimensions of the ray matrix
-    height, width = size(rays)
+    # Check if the number of emissivities and temperatures matches the number of faces
+    n_face = length(shape.faces)
+    if length(emissivities) != n_face || length(temperatures) != n_face
+        error("The number of emissivities and temperatures must match the number of faces in the shape model.")
+    end
     
-    # Initialize image and z-buffer
+    # Initialize image with the dimensions of the ray matrix
+    height, width = size(rays)
     image = zeros(Float64, height, width)
-    z_buffer = fill(Inf, height, width)
     
     # Physical constants
     σ = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
@@ -143,31 +146,23 @@ function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysical
             ray = rays[v, u]
             
             # Perform ray-shape intersection
-            result = intersect_ray_shape(ray, shape)
+            intersection = intersect_ray_shape(ray, shape)
             
             # If intersection occurred
-            if result.hit
-                # Get face index
-                face_index = result.face_index
-                
+            if intersection.hit
                 # Get emissivity and temperature for this face
-                ε = emissivities[face_index]
-                T = temperatures[face_index]
+                ε = emissivities[intersection.face_index]
+                T = temperatures[intersection.face_index]
                 
                 # Calculate total radiance using Stefan-Boltzmann law with emissivity
                 # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
                 # L = E/π [W/m²/sr] (radiance assuming Lambertian surface)
                 radiance = ε * σ * T^4 / π  # [W/m²/sr]
                 
-                # Store distance to intersection
-                distance = result.distance
-                
-                # Check if this intersection is closer than what's already in the z-buffer
-                if distance < z_buffer[v, u]
-                    # Update image and z-buffer
-                    image[v, u] = radiance
-                    z_buffer[v, u] = distance
-                end
+                image[v, u] = radiance
+            else
+                # If no intersection, set pixel to zero (or some other value)
+                image[v, u] = 0.0
             end
         end
     end
