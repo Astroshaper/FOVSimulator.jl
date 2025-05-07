@@ -67,7 +67,7 @@ function generate_pixel_rays(cam::SpiceCamera)
 end
 
 """
-    generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid, et::Float64, abcorr::String) -> Matrix{Ray}
+    generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid) -> Matrix{Ray}
 
 SpiceCameraオブジェクトからカメラの視野情報を取得して、各ピクセルに対応するレイを生成し、
 小惑星固定座標系に変換する。
@@ -81,7 +81,19 @@ SpiceCameraオブジェクトからカメラの視野情報を取得して、各
 # 戻り値
 - `rays`    : 小惑星固定座標系における各ピクセルに対応するレイの2次元配列（画像サイズと同じ形状）
 """
-function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid, et::Float64, abcorr::String)
+function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid)
+
+    if cam.state.et != asteroid.state.et
+        error("The ephemeris time of the camera and asteroid must match. Update the camera and asteroid state before calling this function.")
+    end
+
+    if cam.state.abcorr != asteroid.state.abcorr
+        error("The `abcorr` flag of the camera and asteroid must match. Update the camera and asteroid state before calling this function.")
+    end
+
+    et = cam.state.et
+    abcorr = cam.state.abcorr
+
     # Generate rays in camera frame
     rays = generate_pixel_rays(cam)
     
