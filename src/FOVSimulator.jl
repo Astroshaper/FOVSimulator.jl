@@ -27,6 +27,6 @@ export SpiceAsteroid
 export update!
 
 include("image_generation.jl")
-export generate_intersection_map, generate_image_radiance
+export generate_intersection_map, generate_image_temperature, generate_image_radiance
 
 end # module FOVSimulator

@@ -157,6 +157,48 @@ function generate_intersection_map(cam::SpiceCamera, asteroid::SpiceAsteroid)
 end
 
 """
+    generate_image_temperature(intersection_map::Matrix{RayShapeIntersectionResult}, temperatures::Vector{Float64}) -> image::Matrix{Float64}
+
+Generate a thermal image based on intersection results and surface temperatures.
+
+# Arguments
+- `intersection_map` : 2D array of intersection results (from `generate_intersection_map`)
+- `temperatures`     : Temperature values [K] for each face, length should match the number of faces
+
+# Returns
+- `image` : 2D array of temperature values [K] for each pixel
+"""
+function generate_image_temperature(intersection_map::Matrix{RayShapeIntersectionResult}, temperatures::Vector{Float64})
+    # Get image dimensions
+    height, width = size(intersection_map)
+    
+    # Initialize array to store temperature values
+    image = zeros(Float64, height, width)
+    
+    # Calculate temperature for each pixel
+    for v in 1:height
+        for u in 1:width
+            # Get intersection result
+            intersection = intersection_map[v, u]
+            
+            # If intersection exists
+            if intersection.hit
+                # Get temperature
+                T = temperatures[intersection.face_index]
+                
+                # Store temperature
+                image[v, u] = T
+            else
+                # No intersection (space)
+                image[v, u] = 0.0
+            end
+        end
+    end
+    
+    return image
+end
+
+"""
     generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionResult}, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> image::Matrix{Float64}
 
 Generate a thermal image based on intersection results and surface properties.
@@ -167,9 +209,14 @@ Generate a thermal image based on intersection results and surface properties.
 - `temperatures`     : Temperature values [K] for each face, length should match the number of faces
 
 # Returns
-- `image`         : 2D array of radiance values [W/m²/sr] for each pixel
+- `image` : 2D array of radiance values [W/m²/sr] for each pixel
 """
 function generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionResult}, emissivities::Vector{Float64}, temperatures::Vector{Float64})
+    # Check if emissivities and temperatures have the same length
+    if length(emissivities) != length(temperatures)
+        error("The length of emissivities and temperatures must match.")
+    end
+
     # Get image dimensions
     height, width = size(intersection_map)
     
@@ -184,12 +231,9 @@ function generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionRe
             
             # If intersection exists
             if intersection.hit
-                # Get face index
-                face_index = intersection.face_index
-                
                 # Get emissivity and temperature
-                ε = emissivities[face_index]
-                T = temperatures[face_index]
+                ε = emissivities[intersection.face_index]
+                T = temperatures[intersection.face_index]
                 
                 # Calculate radiance using Stefan-Boltzmann law
                 # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
