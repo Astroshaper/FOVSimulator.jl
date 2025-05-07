@@ -199,6 +199,70 @@ function generate_image_temperature(intersection_map::Matrix{RayShapeIntersectio
 end
 
 """
+    generate_image_temperature(
+        intersection_map1::Matrix{RayShapeIntersectionResult}, temperatures1::Vector{Float64},
+        intersection_map2::Matrix{RayShapeIntersectionResult}, temperatures2::Vector{Float64}
+    ) -> image::Matrix{Float64}
+
+Generate a thermal image for a binary asteroid based on intersection results and surface temperatures.
+For each pixel, the temperature from the closest intersected body is used.
+
+# Arguments
+- `intersection_map1` : 2D array of intersection results for the primary body
+- `temperatures1`     : Temperature values [K] for each face of the primary body
+- `intersection_map2` : 2D array of intersection results for the secondary body
+- `temperatures2`     : Temperature values [K] for each face of the secondary body
+
+# Returns
+- `image` : 2D array of temperature values [K] for each pixel
+"""
+function generate_image_temperature(intersection_map1::Matrix{RayShapeIntersectionResult}, temperatures1::Vector{Float64},
+                                    intersection_map2::Matrix{RayShapeIntersectionResult}, temperatures2::Vector{Float64})
+    # Check if the intersection maps have the same dimensions
+    if size(intersection_map1) != size(intersection_map2)
+        error("The intersection maps must have the same dimensions.")
+    end
+    
+    # Get image dimensions
+    height, width = size(intersection_map1)
+    
+    # Initialize array to store temperature values
+    image = zeros(Float64, height, width)
+    
+    # Calculate temperature for each pixel
+    for v in 1:height
+        for u in 1:width
+            # Get intersection results
+            intersection1 = intersection_map1[v, u]
+            intersection2 = intersection_map2[v, u]
+            
+            # Check which body is intersected and which is closer
+            if intersection1.hit && intersection2.hit
+                # Both bodies are intersected, use the closer one
+                if intersection1.distance < intersection2.distance
+                    # First body is closer
+                    image[v, u] = temperatures1[intersection1.face_index]
+                else
+                    # Second body is closer
+                    image[v, u] = temperatures2[intersection2.face_index]
+                end
+            elseif intersection1.hit
+                # Only first body is intersected
+                image[v, u] = temperatures1[intersection1.face_index]
+            elseif intersection2.hit
+                # Only second body is intersected
+                image[v, u] = temperatures2[intersection2.face_index]
+            else
+                # No intersection (space)
+                image[v, u] = 0.0
+            end
+        end
+    end
+    
+    return image
+end
+
+"""
     generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionResult}, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> image::Matrix{Float64}
 
 Generate a thermal image based on intersection results and surface properties.
@@ -242,6 +306,98 @@ function generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionRe
                 
                 # Store radiance
                 image[v, u] = radiance
+            else
+                # No intersection (space)
+                image[v, u] = 0.0
+            end
+        end
+    end
+    
+    return image
+end
+
+"""
+    generate_image_radiance(
+        intersection_map1::Matrix{RayShapeIntersectionResult}, emissivities1::Vector{Float64}, temperatures1::Vector{Float64},
+        intersection_map2::Matrix{RayShapeIntersectionResult}, emissivities2::Vector{Float64}, temperatures2::Vector{Float64}
+    ) -> image::Matrix{Float64}
+
+Generate a thermal image for a binary asteroid system based on intersection results and surface properties.
+For each pixel, the radiance from the closest intersected body is calculated.
+
+# Arguments
+- `intersection_map1` : 2D array of intersection results for the primary body
+- `emissivities1`     : Emissivity values (0-1) for each face of the primary body
+- `temperatures1`     : Temperature values [K] for each face of the primary body
+- `intersection_map2` : 2D array of intersection results for the secondary body
+- `emissivities2`     : Emissivity values (0-1) for each face of the secondary body
+- `temperatures2`     : Temperature values [K] for each face of the secondary body
+
+# Returns
+- `image` : 2D array of radiance values [W/m²/sr] for each pixel
+"""
+function generate_image_radiance(
+    intersection_map1::Matrix{RayShapeIntersectionResult}, emissivities1::Vector{Float64}, temperatures1::Vector{Float64},
+    intersection_map2::Matrix{RayShapeIntersectionResult}, emissivities2::Vector{Float64}, temperatures2::Vector{Float64}
+)
+    # Check if the intersection maps have the same dimensions
+    if size(intersection_map1) != size(intersection_map2)
+        error("The intersection maps must have the same dimensions.")
+    end
+    
+    # Check if emissivities and temperatures have the same length for each body
+    if length(emissivities1) != length(temperatures1)
+        error("The length of emissivities1 and temperatures1 must match.")
+    end
+    
+    if length(emissivities2) != length(temperatures2)
+        error("The length of emissivities2 and temperatures2 must match.")
+    end
+    
+    # Get image dimensions
+    height, width = size(intersection_map1)
+    
+    # Initialize array to store radiance values
+    image = zeros(Float64, height, width)
+    
+    # Calculate radiance for each pixel
+    for v in 1:height
+        for u in 1:width
+            # Get intersection results
+            intersection1 = intersection_map1[v, u]
+            intersection2 = intersection_map2[v, u]
+            
+            # Check which body is intersected and which is closer
+            if intersection1.hit && intersection2.hit
+                # Both bodies are intersected, use the closer one
+                if intersection1.distance < intersection2.distance
+                    # First body is closer
+                    ε = emissivities1[intersection1.face_index]
+                    T = temperatures1[intersection1.face_index]
+                else
+                    # Second body is closer
+                    ε = emissivities2[intersection2.face_index]
+                    T = temperatures2[intersection2.face_index]
+                end
+                
+                # Calculate radiance
+                radiance = ε * σ_SB * T^4 / π  # [W/m²/sr]
+                image[v, u] = radiance
+                
+            elseif intersection1.hit
+                # Only first body is intersected
+                ε = emissivities1[intersection1.face_index]
+                T = temperatures1[intersection1.face_index]
+                radiance = ε * σ_SB * T^4 / π  # [W/m²/sr]
+                image[v, u] = radiance
+                
+            elseif intersection2.hit
+                # Only second body is intersected
+                ε = emissivities2[intersection2.face_index]
+                T = temperatures2[intersection2.face_index]
+                radiance = ε * σ_SB * T^4 / π  # [W/m²/sr]
+                image[v, u] = radiance
+                
             else
                 # No intersection (space)
                 image[v, u] = 0.0
