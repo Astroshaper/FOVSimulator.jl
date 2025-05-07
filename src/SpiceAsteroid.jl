@@ -22,10 +22,18 @@ end
 A structure holding dynamic asteroid state.
 
 # Fields
+- `et`       : Ephemeris time of the last update
+- `ref`      : Reference frame of the last update
+- `abcorr`   : Aberration correction flag of the last update
+- `obs`      : Observing body name of the last update
 - `position` : Asteroid position
 - `velocity` : Asteroid velocity
 """
 mutable struct SpiceAsteroidState
+    et::Float64
+    ref::String
+    abcorr::String
+    obs::String
     position::SVector{3, Float64}
     velocity::SVector{3, Float64}
 end
@@ -63,11 +71,15 @@ function SpiceAsteroid(name::String, shape::ShapeModel, asteroid_fixed_frame::St
     static = SpiceAsteroidStatic(name, shape, asteroid_fixed_frame, bbox)
     
     # Initialize dynamic information
+    et = 0.0
+    ref = ""
+    abcorr = ""
+    obs = ""
     position = @SVector zeros(3)
     velocity = @SVector zeros(3)
     
     # Create dynamic information structure
-    state = SpiceAsteroidState(position, velocity)
+    state = SpiceAsteroidState(et, ref, abcorr, obs, position, velocity)
     
     # Create asteroid object
     asteroid = SpiceAsteroid(static, state)
@@ -83,12 +95,16 @@ function Base.show(io::IO, asteroid::SpiceAsteroid)
     if !isempty(asteroid.static.asteroid_fixed_frame)
         msg *= "Fixed frame   : $(asteroid.static.asteroid_fixed_frame)\n"
     end
+    if !isempty(asteroid.state.ref)
+        msg *= "Last update   : et = $(asteroid.state.et), ref = $(asteroid.state.ref), "
+        msg *= "abcorr = $(asteroid.state.abcorr), obs = $(asteroid.state.obs)\n"
+    end
     msg *= "Position      : $(asteroid.state.position)\n"
     msg *= "Velocity      : $(asteroid.state.velocity)\n"
     msg *= "-------------------\n"
     
     print(io, msg)
-    println(asteroid.static.shape)
+    println(io, asteroid.static.shape)
 end
 
 
@@ -105,6 +121,13 @@ Update asteroid state at the specified time and frame.
 - `obs`      : Observing body name
 """
 function update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::String, obs::String)
+    # Update state parameters
+    asteroid.state.et = et
+    asteroid.state.ref = ref
+    asteroid.state.abcorr = abcorr
+    asteroid.state.obs = obs
+    
+    # Update position and velocity
     state, _ = SPICE.spkezr(asteroid.static.name, et, ref, abcorr, obs)
     asteroid.state.position = state[1:3] * 1000
     asteroid.state.velocity = state[4:6] * 1000
