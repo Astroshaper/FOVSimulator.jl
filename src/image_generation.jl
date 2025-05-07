@@ -1,8 +1,8 @@
 """
     image_generation.jl
 
-カメラの視野情報からピクセルごとのレイを生成し、熱画像を生成する機能を提供する。
-バウンディングボックスを用いた高速化機能も提供する。
+Functions for generating images based on camera FOV information.
+Provides functionality for thermal image generation with bounding box optimization.
 """
 
 """
@@ -19,13 +19,13 @@ focal_length(fov_angle::Real, n_pixel::Int) = n_pixel / (2 * tan(deg2rad(fov_ang
 """
     generate_pixel_rays(cam::SpiceCamera) -> Matrix{Ray}
 
-SpiceCameraオブジェクトからカメラの視野情報を取得して、カメラ座標系において各ピクセルに対応するレイを生成する。
+Generate rays for each pixel based on camera FOV information in the camera frame.
 
-# 引数
-- `cam` : SpiceCameraオブジェクト
+# Arguments
+- `cam` : SpiceCamera object
 
-# 戻り値
-- `rays` : 各ピクセルに対応するレイの2次元配列（画像サイズと同じ形状）
+# Returns
+- `rays` : 2D array of rays corresponding to each pixel (same shape as the image)
 """
 function generate_pixel_rays(cam::SpiceCamera)
     # Get camera parameters
@@ -69,28 +69,27 @@ end
 """
     generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid) -> Matrix{Ray}
 
-SpiceCameraオブジェクトからカメラの視野情報を取得して、各ピクセルに対応するレイを生成し、
-小惑星固定座標系に変換する。
+Generate rays for each pixel based on camera FOV information and transform them to the asteroid-fixed frame.
 
-# 引数
-- `cam`     : SpiceCameraオブジェクト
-- `asteroid`: SpiceAsteroidオブジェクト
-- `et`      : エフェメリス時刻
-- `abcorr`  : 光行差補正フラグ（例："LT+S"）
+# Arguments
+- `cam`     : SpiceCamera object
+- `asteroid`: SpiceAsteroid object
 
-# 戻り値
-- `rays`    : 小惑星固定座標系における各ピクセルに対応するレイの2次元配列（画像サイズと同じ形状）
+# Returns
+- `rays`    : 2D array of rays in the asteroid-fixed frame corresponding to each pixel
 """
 function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid)
-
+    # Check if camera and asteroid states are updated with the same ephemeris time
     if cam.state.et != asteroid.state.et
         error("The ephemeris time of the camera and asteroid must match. Update the camera and asteroid state before calling this function.")
     end
 
+    # Check if camera and asteroid states use the same aberration correction flag
     if cam.state.abcorr != asteroid.state.abcorr
         error("The `abcorr` flag of the camera and asteroid must match. Update the camera and asteroid state before calling this function.")
     end
 
+    # Get ephemeris time and aberration correction flag
     et = cam.state.et
     abcorr = cam.state.abcorr
 
@@ -125,56 +124,82 @@ function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid)
 end
 
 """
-    generate_thermal_image(rays::Matrix{Ray}, asteroid::SpiceAsteroid, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> Matrix{Float64}
+    generate_intersection_map(cam::SpiceCamera, asteroid::SpiceAsteroid) -> intersection_map::Matrix{RayShapeIntersectionResult}
 
-`generate_pixel_rays`関数で生成したレイ、小惑星オブジェクト、各面に与えた温度と放射率をもとに、赤外線カメラの模擬画像を作成する。
-小惑星オブジェクトに格納されているバウンディングボックスを使用して高速化する。
+Generate an intersection map by casting rays from the camera to the asteroid shape model.
+Uses bounding box optimization for faster computation.
 
-# 引数
-- `rays`         : 各ピクセルに対応するレイの2次元配列（`generate_pixel_rays`関数で生成）
-- `asteroid`     : 小惑星オブジェクト
-- `emissivities` : 各面の放射率（0-1）、face数と同じ長さ
-- `temperatures` : 各面の温度 [K]、face数と同じ長さ
+# Arguments
+- `cam`     : SpiceCamera object
+- `asteroid`: SpiceAsteroid object
 
-# 戻り値
-- `image`        : 画素ごとの放射輝度 [W/m²/sr] を格納した2次元配列
+# Returns
+- `intersections` : 2D array of intersection results for each pixel
 """
-function generate_thermal_image(rays::Matrix{Ray}, asteroid::SpiceAsteroid, emissivities::Vector{Float64}, temperatures::Vector{Float64})
-    shape = asteroid.static.shape  # Get shape model from asteroid object
+function generate_intersection_map(cam::SpiceCamera, asteroid::SpiceAsteroid)
+    # Generate rays for each pixel in the asteroid-fixed frame
+    rays = generate_pixel_rays(cam, asteroid)
     
-    # Check if the number of emissivities and temperatures matches the number of faces
-    n_face = length(shape.faces)
-    if length(emissivities) != n_face || length(temperatures) != n_face
-        error("The number of emissivities and temperatures must match the number of faces in the shape model.")
-    end
-    
-    # Initialize image with the dimensions of the ray matrix
+    # Get image dimensions
     height, width = size(rays)
-    image = zeros(Float64, height, width)
     
-    # Process each pixel
+    # Initialize array to store intersection results
+    intersection_map = Matrix{RayShapeIntersectionResult}(undef, height, width)
+    
+    # Perform intersection test for each pixel
     for v in 1:height
         for u in 1:width
-            # Get ray for this pixel
-            ray = rays[v, u]
+            intersection_map[v, u] = intersect_ray_shape(rays[v, u], asteroid)
+        end
+    end
+    
+    return intersection_map
+end
+
+"""
+    generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionResult}, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> image::Matrix{Float64}
+
+Generate a thermal image based on intersection results and surface properties.
+
+# Arguments
+- `intersection_map` : 2D array of intersection results (from `generate_intersection_map`)
+- `emissivities`     : Emissivity values (0-1) for each face, length should match the number of faces
+- `temperatures`     : Temperature values [K] for each face, length should match the number of faces
+
+# Returns
+- `image`         : 2D array of radiance values [W/m²/sr] for each pixel
+"""
+function generate_image_radiance(intersection_map::Matrix{RayShapeIntersectionResult}, emissivities::Vector{Float64}, temperatures::Vector{Float64})
+    # Get image dimensions
+    height, width = size(intersection_map)
+    
+    # Initialize array to store radiance values
+    image = zeros(Float64, height, width)
+    
+    # Calculate radiance for each pixel
+    for v in 1:height
+        for u in 1:width
+            # Get intersection result
+            intersection = intersection_map[v, u]
             
-            # Perform ray-shape intersection using the asteroid's bounding box
-            intersection = intersect_ray_shape(ray, asteroid)
-            
-            # If intersection occurred
+            # If intersection exists
             if intersection.hit
-                # Get emissivity and temperature for this face
-                ε = emissivities[intersection.face_index]
-                T = temperatures[intersection.face_index]
+                # Get face index
+                face_index = intersection.face_index
                 
-                # Calculate total radiance using Stefan-Boltzmann law with emissivity
+                # Get emissivity and temperature
+                ε = emissivities[face_index]
+                T = temperatures[face_index]
+                
+                # Calculate radiance using Stefan-Boltzmann law
                 # E = ε·σT⁴ [W/m²] (total emitted power per unit area)
                 # L = E/π [W/m²/sr] (radiance assuming Lambertian surface)
                 radiance = ε * σ_SB * T^4 / π  # [W/m²/sr]
                 
+                # Store radiance
                 image[v, u] = radiance
             else
-                # If no intersection, set pixel to zero (or some other value)
+                # No intersection (space)
                 image[v, u] = 0.0
             end
         end
