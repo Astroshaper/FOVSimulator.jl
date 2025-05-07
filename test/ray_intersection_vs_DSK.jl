@@ -119,7 +119,11 @@
 
     update!(cam, et, ref, abcorr, obs)
     ray = Ray(cam.state.position, cam.state.boresight)
-    intersection = intersect_ray_shape(ray, shape)  # 交差判定の結果
+    
+    # バウンディングボックスを計算
+    bbox = compute_bounding_box(shape)
+    
+    intersection = intersect_ray_shape(ray, shape, bbox)  # 交差判定の結果
     
     # @show ray.origin
     # @show ray.direction
@@ -162,7 +166,7 @@
     
     println("Computation time")
     print("    ∘ intersect_ray_shape in FOVSimulator.jl :")
-    @time intersect_ray_shape(ray, shape)
+    @time intersect_ray_shape(ray, shape, bbox)
     print("    ∘ sincpt in SPICE.jl                     :")
     @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
     println()

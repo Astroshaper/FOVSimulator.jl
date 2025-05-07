@@ -1,7 +1,8 @@
 """
-    ray_generation.jl
+    image_generation.jl
 
-カメラの視野情報からピクセルごとのレイを生成する機能を提供する。
+カメラの視野情報からピクセルごとのレイを生成し、熱画像を生成する機能を提供する。
+バウンディングボックスを用いた高速化機能も提供する。
 """
 
 """
@@ -112,20 +113,23 @@ function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid, et::Floa
 end
 
 """
-    generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysicalModels.ShapeModel, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> Matrix{Float64}
+    generate_thermal_image(rays::Matrix{Ray}, asteroid::SpiceAsteroid, emissivities::Vector{Float64}, temperatures::Vector{Float64}) -> Matrix{Float64}
 
-`generate_pixel_rays`関数で生成したレイ、形状モデル、各面に与えた温度と放射率をもとに、赤外線カメラの模擬画像を作成する。
+`generate_pixel_rays`関数で生成したレイ、小惑星オブジェクト、各面に与えた温度と放射率をもとに、赤外線カメラの模擬画像を作成する。
+小惑星オブジェクトに格納されているバウンディングボックスを使用して高速化する。
 
 # 引数
 - `rays`         : 各ピクセルに対応するレイの2次元配列（`generate_pixel_rays`関数で生成）
-- `shape`        : 形状モデル
+- `asteroid`     : 小惑星オブジェクト
 - `emissivities` : 各面の放射率（0-1）、face数と同じ長さ
 - `temperatures` : 各面の温度 [K]、face数と同じ長さ
 
 # 戻り値
 - `image`        : 画素ごとの放射輝度 [W/m²/sr] を格納した2次元配列
 """
-function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysicalModels.ShapeModel, emissivities::Vector{Float64}, temperatures::Vector{Float64})
+function generate_thermal_image(rays::Matrix{Ray}, asteroid::SpiceAsteroid, emissivities::Vector{Float64}, temperatures::Vector{Float64})
+    shape = asteroid.static.shape  # Get shape model from asteroid object
+    
     # Check if the number of emissivities and temperatures matches the number of faces
     n_face = length(shape.faces)
     if length(emissivities) != n_face || length(temperatures) != n_face
@@ -142,8 +146,8 @@ function generate_thermal_image(rays::Matrix{Ray}, shape::AsteroidThermoPhysical
             # Get ray for this pixel
             ray = rays[v, u]
             
-            # Perform ray-shape intersection
-            intersection = intersect_ray_shape(ray, shape)
+            # Perform ray-shape intersection using the asteroid's bounding box
+            intersection = intersect_ray_shape(ray, asteroid)
             
             # If intersection occurred
             if intersection.hit

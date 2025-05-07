@@ -91,8 +91,11 @@ end
     # レイを定義
     ray = Ray(@SVector([0.25, 0.25, 1.0]), @SVector([0.0, 0.0, -1.0]))
     
+    # バウンディングボックスを計算
+    bbox = compute_bounding_box(shape)
+    
     # 交差判定
-    result = intersect_ray_shape(ray, shape)
+    result = intersect_ray_shape(ray, shape, bbox)
     
     # テスト
     @test result.hit == true
