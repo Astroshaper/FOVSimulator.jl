@@ -5,6 +5,7 @@ version = "0.0.1-DEV"
 
 [deps]
 AsteroidThermoPhysicalModels = "ab46f4a3-3c83-4d86-98d6-41a8b1a2e76e"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
@@ -13,6 +14,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 AsteroidThermoPhysicalModels = "0.0.7"
+CairoMakie = "0.13.4"
 Downloads = "1.6.0"
 LinearAlgebra = "1.11.0"
 Rotations = "1.7.1"

@@ -1,10 +1,15 @@
 using AsteroidThermoPhysicalModels
+using CairoMakie
 using FOVSimulator
 using Downloads
 using LinearAlgebra
+using Rotations
 using SPICE
 using StaticArrays
 using Test
+
+import SPICE
+# using AsteroidThermoPhysicalModels
 
 @testset "Utility functions" begin
     @test angle_deg([1, 0, 0], [ 0, 1, 0]) ≈ 90
@@ -23,3 +28,4 @@ include("HERA.jl")
 
 include("ray_intersection_simple_cases.jl")  # Simple ray intersection tests
 include("ray_intersection_vs_DSK.jl")        # Ray intersection tests with SPICE comparison
+include("TIRI_image_Didymos.jl")             # Didymos and Dimorphos thermal simulation tests
