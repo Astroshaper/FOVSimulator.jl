@@ -90,18 +90,16 @@ function generate_pixel_rays(cam::SpiceCamera, asteroid::SpiceAsteroid)
     end
 
     # Get ephemeris time and aberration correction flag
-    et = cam.state.et
+    et     = cam.state.et
     abcorr = cam.state.abcorr
 
     # Generate rays in camera frame
     rays = generate_pixel_rays(cam)
     
-    # Get transformation from camera frame to asteroid-fixed frame
-    from = cam.static.fov_frame        # Camera frame
-    to = asteroid.static.asteroid_fixed_frame  # Asteroid-fixed frame
-    
-    # Calculate rotation matrix from camera frame to asteroid-fixed frame
-    Rot = RotMatrix{3}(SPICE.pxform(from, to, et))
+    # Rotation matrix from camera frame to asteroid-fixed frame
+    from = cam.static.fov_frame                  # Camera frame
+    to   = asteroid.static.asteroid_fixed_frame  # Asteroid-fixed frame
+    Rot  = RotMatrix{3}(SPICE.pxform(from, to, et))
     
     # Get camera position in asteroid-fixed frame
     camera_pos_asteroid_frame = SVector{3}(SPICE.spkpos(cam.static.name, et, to, abcorr, asteroid.static.name)[1]) * 1000
