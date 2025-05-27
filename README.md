@@ -1,6 +1,6 @@
 # FOVSimulator.jl
 
-FOVSimulator.jl is a Julia package for simulating camera field of view (FOV) in space missions. It specializes in camera simulations for observing celestial bodies such as asteroids, providing high-precision position and attitude calculations using SPICE kernels and image generation capabilities through ray tracing.
+`FOVSimulator.jl` is a Julia package for simulating camera field of view (FOV) in space missions. It specializes in camera simulations for observing celestial bodies such as asteroids, providing high-precision position and attitude calculations using SPICE kernels and image generation capabilities through ray tracing.
 
 ## Features
 
