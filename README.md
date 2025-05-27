@@ -157,11 +157,11 @@ Represents a spacecraft model based on SPICE kernels. Manages static spacecraft 
 
 Represents an asteroid model based on SPICE kernels. Manages static asteroid information (name, shape model, fixed frame, etc.) and dynamic state (position, velocity, etc.).
 
-### Ray
+### `Ray`
 
 Represents a ray for ray tracing. Contains an origin point and a direction vector.
 
-### BoundingBox
+### `BoundingBox`
 
 Represents a bounding box for a shape model. Used to accelerate intersection detection.
 
