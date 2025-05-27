@@ -180,4 +180,4 @@ Represents a bounding box for a shape model. Used to accelerate intersection det
 
 ## License
 
-This package is released under the MIT License. See the LICENSE file for details.
+This package is released under the MIT License. See the [`LICENSE`](https://github.com/Astroshaper/FOVSimulator.jl/blob/main/LICENSE) file for details.
