@@ -27,11 +27,11 @@ Or in the package manager mode in Julia REPL (press `]` to enter):
 
 ## Dependencies
 
-- LinearAlgebra
-- Rotations
-- StaticArrays
-- SPICE
-- AsteroidThermoPhysicalModels
+- [`LinearAlgebra.jl`](https://github.com/JuliaLang/LinearAlgebra.jl)
+- [`Rotations.jl`](https://github.com/JuliaGeometry/Rotations.jl)
+- [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl)
+- [`SPICE.jl`](https://github.com/JuliaAstro/SPICE.jl)
+- [`AsteroidThermoPhysicalModels.jl`](https://github.com/Astroshaper/AsteroidThermoPhysicalModels.jl)
 
 ## Basic Usage
 
