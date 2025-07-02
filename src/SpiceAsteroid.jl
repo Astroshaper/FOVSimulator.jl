@@ -145,4 +145,4 @@ end
 # 戻り値
 - 交差判定結果を格納した`RayShapeIntersectionResult`オブジェクト
 """
-intersect_ray_shape(ray::Ray, asteroid::SpiceAsteroid) = intersect_ray_shape(ray, asteroid.static.shape, asteroid.static.bbox)
+intersect_ray_shape(ray::AsteroidShapeModels.Ray, asteroid::SpiceAsteroid) = AsteroidShapeModels.intersect_ray_shape(ray, asteroid.static.shape, asteroid.static.bbox)
