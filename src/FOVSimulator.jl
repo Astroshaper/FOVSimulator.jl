@@ -1,11 +1,11 @@
 module FOVSimulator
 
+using AsteroidShapeModels
 using LinearAlgebra
 using Rotations
 using StaticArrays
 
 import SPICE
-using AsteroidShapeModels
 
 # Physical constants
 const σ_SB = 5.670374419e-8  # Stefan-Boltzmann constant [W/m²/K⁴]
