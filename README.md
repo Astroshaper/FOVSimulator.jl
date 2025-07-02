@@ -31,7 +31,7 @@ Or in the package manager mode in Julia REPL (press `]` to enter):
 - [`Rotations.jl`](https://github.com/JuliaGeometry/Rotations.jl)
 - [`StaticArrays.jl`](https://github.com/JuliaArrays/StaticArrays.jl)
 - [`SPICE.jl`](https://github.com/JuliaAstro/SPICE.jl)
-- [`AsteroidThermoPhysicalModels.jl`](https://github.com/Astroshaper/AsteroidThermoPhysicalModels.jl)
+- [`AsteroidShapeModels.jl`](https://github.com/Astroshaper/AsteroidShapeModels.jl)
 
 ## Basic Usage
 
@@ -75,7 +75,7 @@ add_instrument!(spacecraft, camera)
 
 ```julia
 # Load shape model
-shape = AsteroidThermoPhysicalModels.load_shape_obj("path/to/shape.obj", scale=1000)  # `scale` factor converts [km] to [m]
+shape = AsteroidShapeModels.load_shape_obj("path/to/shape.obj", scale=1000)  # `scale` factor converts [km] to [m]
 
 # Create asteroid object
 asteroid = SpiceAsteroid("ASTEROID_NAME", shape, "ASTEROID_FIXED_FRAME")
@@ -141,7 +141,7 @@ image = generate_image_temperature(
 
 ### Integration with Thermophysical Models
 
-You can integrate with the AsteroidThermoPhysicalModels package to calculate asteroid surface temperatures and use them for thermal image simulation. See the test file `test/TIRI_image_Didymos.jl` for a detailed example.
+You can integrate with thermophysical modeling packages to calculate asteroid surface temperatures and use them for thermal image simulation. See the test file `test/TIRI_image_Didymos.jl` for a detailed example.
 
 ## Key Components
 
@@ -157,16 +157,12 @@ Represents a spacecraft model based on SPICE kernels. Manages static spacecraft 
 
 Represents an asteroid model based on SPICE kernels. Manages static asteroid information (name, shape model, fixed frame, etc.) and dynamic state (position, velocity, etc.).
 
-### `Ray`
+### Ray Tracing Components
 
-Represents a ray for ray tracing. Contains an origin point and a direction vector.
+The ray tracing functionality (Ray, BoundingBox, intersection detection functions) is now provided by the [`AsteroidShapeModels.jl`](https://github.com/Astroshaper/AsteroidShapeModels.jl) package. This includes:
 
-### `BoundingBox`
-
-Represents a bounding box for a shape model. Used to accelerate intersection detection.
-
-### Intersection Detection Functions
-
+- `Ray`: Represents a ray for ray tracing
+- `BoundingBox`: Represents a bounding box for shape models
 - `intersect_ray_triangle`: Detects intersection between a ray and a triangle
 - `intersect_ray_shape`: Detects intersection between a ray and a shape model
 - `intersect_ray_bounding_box`: Detects intersection between a ray and a bounding box

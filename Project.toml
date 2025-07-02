@@ -4,7 +4,7 @@ authors = ["Masanori Kanamaru <kanamaru-masanori@hotmail.co.jp>"]
 version = "0.0.1-DEV"
 
 [deps]
-AsteroidThermoPhysicalModels = "ab46f4a3-3c83-4d86-98d6-41a8b1a2e76e"
+AsteroidShapeModels = "a7943d8e-5d65-4248-ae23-0082f5115a05"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -13,7 +13,7 @@ SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-AsteroidThermoPhysicalModels = "0.0.7"
+AsteroidShapeModels = "0.3.1"
 CairoMakie = "0.13.4"
 Downloads = "1.6.0"
 LinearAlgebra = "1.11.0"

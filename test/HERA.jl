@@ -124,7 +124,7 @@
     ##==== Unit tests for custom structure: `SpiceAsteroid` ====##
     @testset "SpiceAsteroid basic struct" begin
         path_shape_deimos = joinpath("shape", paths_shape[2])
-        shape_deimos = AsteroidThermoPhysicalModels.load_shape_obj(path_shape_deimos; scale=1000, find_visible_facets=false)
+        shape_deimos = AsteroidShapeModels.load_shape_obj(path_shape_deimos; scale=1000, with_face_visibility=false)
         deimos = SpiceAsteroid("DEIMOS", shape_deimos, "DEIMOS_FIXED")
 
         @test deimos.static.name                 == "DEIMOS"
@@ -152,8 +152,8 @@
         @test isempty(hera.state.instruments)
 
         TIRI_ID = -91200
-        fov_angles = (45.0, 45.0)  # 水平・垂直視野角（度）
-        img_size = (256, 256)      # 画像サイズ（横・縦ピクセル数）
+        fov_angles = (45.0, 45.0)  # Horizontal and vertical field of view angles (degrees)
+        img_size = (256, 256)      # Image size (width, height in pixels)
         tiri = SpiceCamera("HERA_TIRI", TIRI_ID, fov_angles, img_size)
         add_instrument!(hera, tiri)
 
