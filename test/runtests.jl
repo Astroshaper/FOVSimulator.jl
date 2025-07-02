@@ -1,4 +1,4 @@
-using AsteroidThermoPhysicalModels
+using AsteroidShapeModels
 using CairoMakie
 using FOVSimulator
 using Downloads
@@ -9,7 +9,7 @@ using StaticArrays
 using Test
 
 import SPICE
-# using AsteroidThermoPhysicalModels
+# using AsteroidShapeModels
 
 @testset "Utility functions" begin
     @test angle_deg([1, 0, 0], [ 0, 1, 0]) ≈ 90

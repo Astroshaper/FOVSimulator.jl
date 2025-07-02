@@ -80,14 +80,9 @@ end
 
     nodes = [v1, v2, v3]
     faces = [@SVector([1, 2, 3])]  # 頂点インデックスは1から始まる
-    
-    face_centers  = [AsteroidThermoPhysicalModels.face_center(nodes[face]) for face in faces]
-    face_normals  = [AsteroidThermoPhysicalModels.face_normal(nodes[face]) for face in faces]
-    face_areas    = [AsteroidThermoPhysicalModels.face_area(nodes[face])   for face in faces]
-    visiblefacets = [AsteroidThermoPhysicalModels.VisibleFacet[] for _ in faces]
 
-    shape = AsteroidThermoPhysicalModels.ShapeModel(nodes, faces, face_centers, face_normals, face_areas, visiblefacets)
-    
+    shape = ShapeModel(nodes, faces)
+        
     # レイを定義
     ray = Ray(@SVector([0.25, 0.25, 1.0]), @SVector([0.0, 0.0, -1.0]))
     

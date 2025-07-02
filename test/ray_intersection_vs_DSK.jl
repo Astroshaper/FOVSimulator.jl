@@ -101,7 +101,7 @@
     #### FOVSimulator.jlで実装したレイと形状モデルの交差判定 ####
 
     obj_path = joinpath("shape", "g_01165mm_spc_obj_didy_0000n00000_v003.obj")
-    shape = AsteroidThermoPhysicalModels.load_shape_obj(obj_path; scale=1000, find_visible_facets=false)
+    shape = AsteroidShapeModels.load_shape_obj(obj_path; scale=1000, with_face_visibility=false)
     println(shape)
 
     TIRI_ID    = -91200

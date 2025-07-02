@@ -130,8 +130,8 @@ DidymosとDimorphosの熱物理シミュレーションを行い、TIRIカメラ
     path_shape1 = joinpath("shape", "g_50677mm_rad_obj_didy_0000n00000_v001.obj")
     path_shape2 = joinpath("shape", "g_01332mm_lgt_obj_dimo_000n00000_v001.obj")
 
-    shape1 = AsteroidThermoPhysicalModels.load_shape_obj(path_shape1; scale=1000, find_visible_facets=false)
-    shape2 = AsteroidThermoPhysicalModels.load_shape_obj(path_shape2; scale=1000, find_visible_facets=false)
+    shape1 = AsteroidShapeModels.load_shape_obj(path_shape1; scale=1000, with_face_visibility=false)
+    shape2 = AsteroidShapeModels.load_shape_obj(path_shape2; scale=1000, with_face_visibility=false)
     
     n_face1 = length(shape1.faces)  # Didymosの面の数
     n_face2 = length(shape2.faces)  # Dimorphosの面の数
@@ -141,10 +141,10 @@ DidymosとDimorphosの熱物理シミュレーションを行い、TIRIカメラ
     ρ  = 2170.0  # 密度 [kg/m³]
     Cₚ = 600.0   # 熱容量 [J/kg/K]
     
-    # 熱浸透深さの計算
-    l₁ = AsteroidThermoPhysicalModels.thermal_skin_depth(P₁, k, ρ, Cₚ)  # Didymosの熱浸透深さ
-    l₂ = AsteroidThermoPhysicalModels.thermal_skin_depth(P₂, k, ρ, Cₚ)  # Dimorphosの熱浸透深さ
-    Γ = AsteroidThermoPhysicalModels.thermal_inertia(k, ρ, Cₚ)          # 熱慣性 [tiu]
+    # 熱浸透深さの計算（AsteroidThermoPhysicalModelsに依存していたため一時的にコメントアウト）
+    # l₁ = AsteroidThermoPhysicalModels.thermal_skin_depth(P₁, k, ρ, Cₚ)  # Didymosの熱浸透深さ
+    # l₂ = AsteroidThermoPhysicalModels.thermal_skin_depth(P₂, k, ρ, Cₚ)  # Dimorphosの熱浸透深さ
+    # Γ = AsteroidThermoPhysicalModels.thermal_inertia(k, ρ, Cₚ)          # 熱慣性 [tiu]
     
     # 光学特性
     R_vis = 0.059  # 可視光の反射率 [-]
