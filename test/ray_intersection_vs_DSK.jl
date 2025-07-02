@@ -98,7 +98,7 @@
         SPICE.furnsh(filepath)
     end
 
-    #### AsteroidShapeModels.jlで実装したレイと形状モデルの交差判定 ####
+    #### Ray-shape intersection test implemented in AsteroidShapeModels.jl ####
 
     obj_path = joinpath("shape", "g_01165mm_spc_obj_didy_0000n00000_v003.obj")
     shape = AsteroidShapeModels.load_shape_obj(obj_path; scale=1000, with_face_visibility=false, with_bvh=true)
@@ -113,48 +113,48 @@
     et = SPICE.utc2et(utc)
     
     ref    = "DIDYMOS_FIXED"
-    abcorr = "NONE"  # 光行差補正なし
-    # abcorr = "LT+S"  # 光行差補正あり（交差点が0.0012 m程度変わる）
+    abcorr = "NONE"  # No aberration correction
+    # abcorr = "LT+S"  # With aberration correction (intersection point changes by about 0.0012 m)
     obs    = "DIDYMOS"
 
     update!(cam, et, ref, abcorr, obs)
     ray = Ray(cam.state.position, cam.state.boresight)
     
-    # バウンディングボックスを計算
+    # Calculate bounding box
     bbox = compute_bounding_box(shape)
     
-    intersection = intersect_ray_shape(ray, shape, bbox)  # 交差判定の結果
+    intersection = intersect_ray_shape(ray, shape, bbox)  # Intersection test result
     
     # @show ray.origin
     # @show ray.direction
     # @show intersection.distance
     # @show intersection.point
 
-    #### SPICEのsincpt関数を用いた交差判定 ####
+    #### Intersection test using SPICE's sincpt function ####
     ## cf. https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sincpt_c.html
 
     spoint, trgepc, srfvec = SPICE.sincpt(
-        "DSK/UNPRIORITIZED",          # 形状モデルの種類（DSKカーネルが読み込まれている場合は自動的にDSKが使用される）
-        obs,                          # 対象天体の名前
-        et,                           # エフェメリス時刻
-        ref,                          # 対象天体の座標系
-        abcorr,                       # 光行差補正フラグ
-        cam.static.name,              # 観測者の名前
-        cam.static.fov_frame,         # 参照座標系
-        collect(cam.static.boresight) # レイの方向ベクトル。ccallのエラーを防ぐため、Vector{Float64}型に変換してsincptに渡す
+        "DSK/UNPRIORITIZED",          # Shape model type (DSK is automatically used when DSK kernels are loaded)
+        obs,                          # Target body name
+        et,                           # Ephemeris time
+        ref,                          # Target body reference frame
+        abcorr,                       # Aberration correction flag
+        cam.static.name,              # Observer name
+        cam.static.fov_frame,         # Reference frame of the ray
+        collect(cam.static.boresight) # Ray direction vector. Convert to Vector{Float64} to prevent ccall errors
     )
 
-    spoint *= 1000  # 単位をkmからmに変換
-    srfvec *= 1000  # 単位をkmからmに変換
+    spoint *= 1000  # Convert units from km to m
+    srfvec *= 1000  # Convert units from km to m
 
     # @show spoint  # Surface intercept point on the target body
     # @show trgepc  # Intercept epoch
     # @show srfvec  # Vector from observer to intercept point
 
-    #### 交差判定結果の比較 ####
+    #### Comparison of intersection test results ####
 
-    diff = norm(spoint - intersection.point)  # 交差判定結果の差 [m]
-    @test diff < 0.01  # 交差判定結果の差が許容誤差未満であることを確認
+    diff = norm(spoint - intersection.point)  # Difference in intersection test results [m]
+    @test diff < 0.01  # Confirm that the difference in intersection results is within tolerance
 
     println("Intersection point [m]")
     println("    ∘ AsteroidShapeModels.jl : $(intersection.point)")
@@ -162,7 +162,7 @@
     println("    → Difference between them : $diff m")
     println()
     
-    #### 実行時間の比較 ####
+    #### Performance comparison ####
     
     println("Computation time")
     print("    ∘ intersect_ray_shape in AsteroidShapeModels.jl :")
@@ -171,5 +171,5 @@
     @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
     println()
 
-    SPICE.kclear()  # SPICEカーネルをアンロード
+    SPICE.kclear()  # Unload SPICE kernels
 end

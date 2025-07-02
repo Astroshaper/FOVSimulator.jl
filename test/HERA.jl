@@ -152,8 +152,8 @@
         @test isempty(hera.state.instruments)
 
         TIRI_ID = -91200
-        fov_angles = (45.0, 45.0)  # 水平・垂直視野角（度）
-        img_size = (256, 256)      # 画像サイズ（横・縦ピクセル数）
+        fov_angles = (45.0, 45.0)  # Horizontal and vertical field of view angles (degrees)
+        img_size = (256, 256)      # Image size (width, height in pixels)
         tiri = SpiceCamera("HERA_TIRI", TIRI_ID, fov_angles, img_size)
         add_instrument!(hera, tiri)
 

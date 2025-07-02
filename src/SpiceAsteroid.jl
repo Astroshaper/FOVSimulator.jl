@@ -136,13 +136,15 @@ function update!(asteroid::SpiceAsteroid, et::Float64, ref::String, abcorr::Stri
 end
 
 """
-レイとSpiceAsteroidの交差判定を行う関数
+    intersect_ray_shape(ray::Ray, asteroid::SpiceAsteroid) -> RayShapeIntersectionResult
 
-# 引数
+Perform ray-shape intersection test with a `SpiceAsteroid`.
+
+# Arguments
 - `ray`      : Ray at the asteroid-fixed frame
-- `asteroid` : SpiceAsteroidオブジェクト
+- `asteroid` : `SpiceAsteroid` object
 
-# 戻り値
-- 交差判定結果を格納した`RayShapeIntersectionResult`オブジェクト
+# Returns
+- `RayShapeIntersectionResult` object containing the intersection test result
 """
 intersect_ray_shape(ray::AsteroidShapeModels.Ray, asteroid::SpiceAsteroid) = AsteroidShapeModels.intersect_ray_shape(ray, asteroid.static.shape, asteroid.static.bbox)
