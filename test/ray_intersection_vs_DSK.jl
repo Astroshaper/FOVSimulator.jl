@@ -98,10 +98,10 @@
         SPICE.furnsh(filepath)
     end
 
-    #### FOVSimulator.jlで実装したレイと形状モデルの交差判定 ####
+    #### AsteroidShapeModels.jlで実装したレイと形状モデルの交差判定 ####
 
     obj_path = joinpath("shape", "g_01165mm_spc_obj_didy_0000n00000_v003.obj")
-    shape = AsteroidShapeModels.load_shape_obj(obj_path; scale=1000, with_face_visibility=false)
+    shape = AsteroidShapeModels.load_shape_obj(obj_path; scale=1000, with_face_visibility=false, with_bvh=true)
     println(shape)
 
     TIRI_ID    = -91200
@@ -157,17 +157,17 @@
     @test diff < 0.01  # 交差判定結果の差が許容誤差未満であることを確認
 
     println("Intersection point [m]")
-    println("    ∘ FOVSimulator.jl : $(intersection.point)")
-    println("    ∘ SPICE/DSK       : $spoint")
+    println("    ∘ AsteroidShapeModels.jl : $(intersection.point)")
+    println("    ∘ SPICE/DSK              : $spoint")
     println("    → Difference between them : $diff m")
     println()
     
     #### 実行時間の比較 ####
     
     println("Computation time")
-    print("    ∘ intersect_ray_shape in FOVSimulator.jl :")
+    print("    ∘ intersect_ray_shape in AsteroidShapeModels.jl :")
     @time intersect_ray_shape(ray, shape, bbox)
-    print("    ∘ sincpt in SPICE.jl                     :")
+    print("    ∘ sincpt in SPICE.jl                            :")
     @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
     println()
 
