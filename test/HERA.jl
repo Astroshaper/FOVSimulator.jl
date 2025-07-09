@@ -124,7 +124,7 @@
     ##==== Unit tests for custom structure: `SpiceAsteroid` ====##
     @testset "SpiceAsteroid basic struct" begin
         path_shape_deimos = joinpath("shape", paths_shape[2])
-        shape_deimos = AsteroidShapeModels.load_shape_obj(path_shape_deimos; scale=1000, with_face_visibility=false)
+        shape_deimos = AsteroidShapeModels.load_shape_obj(path_shape_deimos; scale=1000, with_face_visibility=false, with_bvh=true)
         deimos = SpiceAsteroid("DEIMOS", shape_deimos, "DEIMOS_FIXED")
 
         @test deimos.static.name                 == "DEIMOS"

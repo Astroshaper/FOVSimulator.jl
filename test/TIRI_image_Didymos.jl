@@ -131,8 +131,8 @@ and generation of thermal images with TIRI camera.
     path_shape1 = joinpath("shape", "g_50677mm_rad_obj_didy_0000n00000_v001.obj")
     path_shape2 = joinpath("shape", "g_01332mm_lgt_obj_dimo_000n00000_v001.obj")
 
-    shape1 = AsteroidShapeModels.load_shape_obj(path_shape1; scale=1000, with_face_visibility=false)
-    shape2 = AsteroidShapeModels.load_shape_obj(path_shape2; scale=1000, with_face_visibility=false)
+    shape1 = AsteroidShapeModels.load_shape_obj(path_shape1; scale=1000, with_face_visibility=false, with_bvh=true)
+    shape2 = AsteroidShapeModels.load_shape_obj(path_shape2; scale=1000, with_face_visibility=false, with_bvh=true)
     
     n_face1 = length(shape1.faces)  # Number of faces in Didymos
     n_face2 = length(shape2.faces)  # Number of faces in Dimorphos
