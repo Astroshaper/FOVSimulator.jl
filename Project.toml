@@ -13,7 +13,7 @@ SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-AsteroidShapeModels = "0.3.1"
+AsteroidShapeModels = "0.4"
 CairoMakie = "0.13.4"
 Downloads = "1.6.0"
 Rotations = "1.7.1"
