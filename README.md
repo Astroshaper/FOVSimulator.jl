@@ -75,7 +75,12 @@ add_instrument!(spacecraft, camera)
 
 ```julia
 # Load shape model
-shape = AsteroidShapeModels.load_shape_obj("path/to/shape.obj", scale=1000)  # `scale` factor converts [km] to [m]
+# Load an asteroid shape model
+# - `path/to/shape.obj` is the path to your OBJ file (mandatory)
+# - `scale` : scale factor for the shape model (e.g., 1000 for km to m conversion)
+# - `with_face_visibility` : whether to build face-to-face visibility graph for illumination checking and thermophysical modeling
+# - `with_bvh` : whether to build BVH for ray tracing
+shape = load_shape_obj("path/to/shape.obj"; scale=1000, with_face_visibility=false, with_bvh=true)
 
 # Create asteroid object
 asteroid = SpiceAsteroid("ASTEROID_NAME", shape, "ASTEROID_FIXED_FRAME")
@@ -85,10 +90,10 @@ asteroid = SpiceAsteroid("ASTEROID_NAME", shape, "ASTEROID_FIXED_FRAME")
 
 ```julia
 # Set simulation time
-et = SPICE.str2et("2025-01-01T12:00:00")  # Ephemeris time
-ref = "J2000"  # Reference frame
-abcorr = "NONE"  # Aberration correction flag
-obs = "EARTH"  # Observer
+et     = SPICE.str2et("2025-01-01T12:00:00")  # Ephemeris time
+ref    = "J2000"                              # Reference frame
+abcorr = "NONE"                               # Aberration correction flag
+obs    = "EARTH"                              # Observer
 
 # Update spacecraft and asteroid states
 update!(spacecraft, et, ref, abcorr, obs)
