@@ -7,13 +7,11 @@ A structure holding static asteroid information.
 - `name`                : Asteroid name
 - `shape`               : Shape model
 - `asteroid_fixed_frame`: Name of the asteroid-fixed reference frame
-- `bbox`                : Bounding box of the shape model at the asteroid-fixed frame
 """
 struct SpiceAsteroidStatic
     name::String
     shape::ShapeModel
     asteroid_fixed_frame::String
-    bbox::BoundingBox
 end
 
 """
@@ -64,11 +62,8 @@ Construct an asteroid model.
 - `asteroid_fixed_frame`: Name of the asteroid-fixed reference frame
 """
 function SpiceAsteroid(name::String, shape::ShapeModel, asteroid_fixed_frame::String)
-    # Calculate bounding box for the shape model
-    bbox = compute_bounding_box(shape)
-    
     # Create static information structure
-    static = SpiceAsteroidStatic(name, shape, asteroid_fixed_frame, bbox)
+    static = SpiceAsteroidStatic(name, shape, asteroid_fixed_frame)
     
     # Initialize dynamic information
     et = 0.0
@@ -147,4 +142,6 @@ Perform ray-shape intersection test with a `SpiceAsteroid`.
 # Returns
 - `RayShapeIntersectionResult` object containing the intersection test result
 """
-intersect_ray_shape(ray::AsteroidShapeModels.Ray, asteroid::SpiceAsteroid) = AsteroidShapeModels.intersect_ray_shape(ray, asteroid.static.shape, asteroid.static.bbox)
+function intersect_ray_shape(ray::AsteroidShapeModels.Ray, asteroid::SpiceAsteroid)
+    return AsteroidShapeModels.intersect_ray_shape(ray, asteroid.static.shape)
+end
