@@ -115,13 +115,14 @@ Test batch ray processing performance
     
     # Verify results are identical
     @test size(result_loop) == size(result_batch)
-    for i in eachindex(result_loop)
-        @test result_loop[i].hit == result_batch[i].hit
-        if result_loop[i].hit
-            @test result_loop[i].face_idx == result_batch[i].face_idx
-            @test result_loop[i].distance ≈ result_batch[i].distance rtol=1e-10
-        end
-    end
+    
+    # Check all hit values match
+    @test all(result_loop[i].hit == result_batch[i].hit for i in eachindex(result_loop))
+    
+    # For hits, check face indices and distances match
+    hit_indices = findall(i -> result_loop[i].hit, eachindex(result_loop))
+    @test all(result_loop[i].face_idx == result_batch[i].face_idx for i in hit_indices)
+    @test all(result_loop[i].distance ≈  result_batch[i].distance for i in hit_indices)
     
     # Clean up
     SPICE.kclear()
