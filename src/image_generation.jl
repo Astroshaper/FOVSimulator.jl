@@ -140,7 +140,7 @@ function generate_intersection_map(cam::SpiceCamera, asteroid::SpiceAsteroid)
     
     # Perform batch intersection test for all rays at once
     # This leverages the optimized batch processing in AsteroidShapeModels.jl v0.4.0
-    intersection_map = intersect_ray_shape(rays, asteroid.static.shape)
+    intersection_map = intersect_ray_shape(rays, asteroid)
     
     return intersection_map
 end

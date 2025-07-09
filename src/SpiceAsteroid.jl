@@ -145,3 +145,35 @@ Perform ray-shape intersection test with a `SpiceAsteroid`.
 function intersect_ray_shape(ray::AsteroidShapeModels.Ray, asteroid::SpiceAsteroid)
     return AsteroidShapeModels.intersect_ray_shape(ray, asteroid.static.shape)
 end
+
+"""
+    intersect_ray_shape(rays::Vector{Ray}, asteroid::SpiceAsteroid) -> Vector{RayShapeIntersectionResult}
+
+Perform batch ray-shape intersection test with a `SpiceAsteroid` for a vector of rays.
+
+# Arguments
+- `rays`     : Vector of rays at the asteroid-fixed frame
+- `asteroid` : `SpiceAsteroid` object
+
+# Returns
+- Vector of `RayShapeIntersectionResult` objects
+"""
+function intersect_ray_shape(rays::AbstractVector{AsteroidShapeModels.Ray}, asteroid::SpiceAsteroid)
+    return AsteroidShapeModels.intersect_ray_shape(rays, asteroid.static.shape)
+end
+
+"""
+    intersect_ray_shape(rays::Matrix{Ray}, asteroid::SpiceAsteroid) -> Matrix{RayShapeIntersectionResult}
+
+Perform batch ray-shape intersection test with a `SpiceAsteroid` for a matrix of rays.
+
+# Arguments
+- `rays`     : Matrix of rays at the asteroid-fixed frame
+- `asteroid` : `SpiceAsteroid` object
+
+# Returns
+- Matrix of `RayShapeIntersectionResult` objects
+"""
+function intersect_ray_shape(rays::AbstractMatrix{AsteroidShapeModels.Ray}, asteroid::SpiceAsteroid)
+    return AsteroidShapeModels.intersect_ray_shape(rays, asteroid.static.shape)
+end
