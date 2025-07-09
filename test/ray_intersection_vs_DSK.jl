@@ -120,10 +120,7 @@
     update!(cam, et, ref, abcorr, obs)
     ray = Ray(cam.state.position, cam.state.boresight)
     
-    # Calculate bounding box
-    bbox = compute_bounding_box(shape)
-    
-    intersection = intersect_ray_shape(ray, shape, bbox)  # Intersection test result
+    intersection = intersect_ray_shape(ray, shape)  # Intersection test result
     
     # @show ray.origin
     # @show ray.direction
@@ -166,7 +163,7 @@
     
     println("Computation time")
     print("    ∘ intersect_ray_shape in AsteroidShapeModels.jl :")
-    @time intersect_ray_shape(ray, shape, bbox)
+    @time intersect_ray_shape(ray, shape)
     print("    ∘ sincpt in SPICE.jl                            :")
     @time SPICE.sincpt("DSK/UNPRIORITIZED", obs, et, ref, abcorr, "HERA", "HERA_TIRI", collect(cam.static.boresight))
     println()
